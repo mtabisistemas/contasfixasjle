@@ -111,11 +111,38 @@ export default function App() {
     }
   };
 
-  // Salvar Nova Conta ou Editar Existente no Supabase
-  const handleSaveBill = async (e) => {
+  // State do Modal de Confirmação do Sistema
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    confirmVariant: 'primary',
+    onConfirm: null,
+  });
+
+  // Requisitar Salvar com Confirmação do Sistema
+  const handleSaveBill = (e) => {
     e.preventDefault();
     if (!formDescricao.trim()) return;
 
+    const descStr = formDescricao.trim();
+    const diaNum = Number(formDia);
+    const actionText = editingBill ? 'salvar as alterações da' : 'cadastrar a nova';
+
+    setConfirmModal({
+      isOpen: true,
+      title: editingBill ? '✏️ Confirmar Alterações' : '➕ Confirmar Nova Conta',
+      message: `Deseja ${actionText} conta "${descStr}" com vencimento no dia ${diaNum}?`,
+      confirmText: editingBill ? 'Salvar' : 'Cadastrar',
+      confirmVariant: 'primary',
+      onConfirm: () => executeSaveBill(),
+    });
+  };
+
+  // Executar Salvar no Supabase
+  const executeSaveBill = async () => {
+    setConfirmModal({ isOpen: false });
     const diaNum = Number(formDia);
     const descStr = formDescricao.trim();
 
@@ -141,19 +168,30 @@ export default function App() {
     await loadData();
   };
 
-  // Excluir Conta no Supabase
-  const handleDeleteBill = async (contaId) => {
-    if (confirm('Tem certeza que deseja excluir esta conta permanentemente?')) {
-      try {
-        if (isSupabaseConfigured && supabase) {
-          await supabase.from('contas').delete().eq('id', contaId);
-        }
-      } catch (err) {
-        console.error('Erro Supabase ao excluir:', err);
+  // Requisitar Excluir com Confirmação do Sistema
+  const handleDeleteBill = (bill) => {
+    setConfirmModal({
+      isOpen: true,
+      title: '⚠️ Confirmar Exclusão',
+      message: `Tem certeza de que deseja excluir a conta "${bill.descricao}" permanentemente?`,
+      confirmText: 'Sim, Excluir',
+      confirmVariant: 'danger',
+      onConfirm: () => executeDeleteBill(bill.id),
+    });
+  };
+
+  // Executar Exclusão no Supabase
+  const executeDeleteBill = async (contaId) => {
+    setConfirmModal({ isOpen: false });
+    try {
+      if (isSupabaseConfigured && supabase) {
+        await supabase.from('contas').delete().eq('id', contaId);
       }
-      closeFormModal();
-      await loadData();
+    } catch (err) {
+      console.error('Erro Supabase ao excluir:', err);
     }
+    closeFormModal();
+    await loadData();
   };
 
   const openAddModal = () => {
@@ -418,13 +456,12 @@ export default function App() {
                 />
               </div>
 
-              <div className="modal-actions" style={{ justifyContent: 'space-between' }}>
+              <div className="modal-actions">
                 {editingBill ? (
                   <button
                     type="button"
-                    className="btn"
-                    style={{ backgroundColor: '#EF4444', color: 'white' }}
-                    onClick={() => handleDeleteBill(editingBill.id)}
+                    className="btn btn-delete"
+                    onClick={() => handleDeleteBill(editingBill)}
                   >
                     <Trash2 size={16} /> Excluir
                   </button>
@@ -432,7 +469,7 @@ export default function App() {
                   <div></div>
                 )}
 
-                <div style={{ display: 'flex', gap: 12 }}>
+                <div className="modal-actions-right">
                   <button type="button" className="btn btn-outline" style={{ color: '#104E70' }} onClick={closeFormModal}>
                     Cancelar
                   </button>
@@ -442,6 +479,42 @@ export default function App() {
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO DO SISTEMA */}
+      {confirmModal.isOpen && (
+        <div className="modal-overlay" style={{ zIndex: 200 }} onClick={() => setConfirmModal({ isOpen: false })}>
+          <div className="modal-content confirm-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', gap: '16px' }}>
+            <div className="modal-header">
+              <h2 style={{ fontSize: '1.1rem' }}>{confirmModal.title}</h2>
+              <button className="btn-icon" onClick={() => setConfirmModal({ isOpen: false })}>
+                <X size={18} color="#104E70" />
+              </button>
+            </div>
+
+            <div style={{ fontSize: '0.95rem', color: '#0E2938', lineHeight: 1.5, margin: '8px 0' }}>
+              {confirmModal.message}
+            </div>
+
+            <div className="modal-actions" style={{ justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                style={{ color: '#104E70' }}
+                onClick={() => setConfirmModal({ isOpen: false })}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={`btn ${confirmModal.confirmVariant === 'danger' ? 'btn-delete' : 'btn-primary'}`}
+                onClick={() => confirmModal.onConfirm && confirmModal.onConfirm()}
+              >
+                {confirmModal.confirmText}
+              </button>
+            </div>
           </div>
         </div>
       )}

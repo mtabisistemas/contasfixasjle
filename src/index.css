@@ -406,6 +406,32 @@ body {
   box-shadow: 0 0 0 3px rgba(16, 78, 112, 0.15);
 }
 
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+.modal-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.btn-delete {
+  background-color: #EF4444;
+  color: #FFFFFF;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
+}
+.btn-delete:hover {
+  background-color: #DC2626;
+}
+
 .bill-count-badge {
   font-size: 0.725rem;
   color: var(--jle-blue-light);
@@ -417,6 +443,26 @@ body {
 
 /* ---------------- LAYOUT RESPONSIVO PARA MOBILE E TABLETS ---------------- */
 @media (max-width: 768px) {
+  .modal-content {
+    padding: 18px 14px;
+    max-width: 96%;
+  }
+
+  .modal-actions {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .modal-actions .btn {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .modal-actions-right {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
   html, body {
     height: auto;
     overflow-x: hidden;
