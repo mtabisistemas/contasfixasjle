@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
   Plus,
-  Settings,
   Trash2,
   X,
-  Lock,
   KeyRound,
   LogOut,
   AlertCircle
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured, INITIAL_MOCK_CONTAS } from './supabaseClient';
+import jleLogo from './assets/jle_logo.png';
 
 const REQUIRED_PASSWORD = 'Jle@2026';
 
@@ -31,7 +29,6 @@ export default function App() {
 
   // Modais
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showConfigModal, setShowConfigModal] = useState(false);
   const [editingBill, setEditingBill] = useState(null);
 
   // Form de Nova/Edição de Conta
@@ -109,7 +106,6 @@ export default function App() {
     const descStr = formDescricao.trim();
 
     if (editingBill) {
-      // Atualização
       if (isSupabaseConfigured && supabase) {
         await supabase
           .from('contas')
@@ -124,7 +120,6 @@ export default function App() {
         localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
       }
     } else {
-      // Criação
       const newBill = { dia_vencimento: diaNum, descricao: descStr, ativa: true };
       if (isSupabaseConfigured && supabase) {
         const { data } = await supabase.from('contas').insert([newBill]).select();
@@ -185,13 +180,13 @@ export default function App() {
   const today = new Date();
   const isCurrentMonthActual = today.getFullYear() === currentYear && today.getMonth() + 1 === currentMonth;
 
-  // ---------------- TELA DE BLOQUEIO / LOGIN COM SENHA ----------------
+  // ---------------- TELA DE BLOQUEIO MINIMALISTA E NÍTIDA ----------------
   if (!isAuthenticated) {
     return (
       <div
         style={{
           minHeight: '100vh',
-          backgroundColor: '#0B334B',
+          background: 'linear-gradient(135deg, #0B334B 0%, #104E70 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -202,37 +197,34 @@ export default function App() {
         <div
           style={{
             backgroundColor: '#FFFFFF',
-            borderRadius: '20px',
-            padding: '40px 32px',
-            maxWidth: '420px',
+            borderRadius: '24px',
+            padding: '44px 36px',
+            maxWidth: '380px',
             width: '100%',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
             textAlign: 'center'
           }}
         >
-          <img
-            src="/jle_logo.png"
-            alt="JLE Telecom Logo"
-            style={{ height: '70px', objectFit: 'contain', marginBottom: '24px' }}
-          />
-
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#104E70', marginBottom: '8px' }}>
-            Acesso Restrito - JLE Telecom
-          </h2>
-          <p style={{ fontSize: '0.875rem', color: '#5C7585', marginBottom: '28px' }}>
-            Digite a senha de acesso informada no Telegram para visualizar e ajustar as contas fixas.
-          </p>
+          {/* Logo JLE Telecom */}
+          <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'center' }}>
+            <img
+              src={jleLogo}
+              alt="JLE Telecom Logo"
+              style={{ maxHeight: '85px', maxWidth: '100%', objectFit: 'contain' }}
+            />
+          </div>
 
           <form onSubmit={handleLogin}>
+            {/* Campo de Senha Nítido */}
             <div style={{ position: 'relative', marginBottom: '20px' }}>
               <KeyRound
                 size={20}
-                color="#5C7585"
-                style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
+                color="#104E70"
+                style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }}
               />
               <input
                 type="password"
-                placeholder="Digite a senha..."
+                placeholder="Digite a senha de acesso..."
                 value={passwordInput}
                 onChange={(e) => {
                   setPasswordInput(e.target.value);
@@ -240,12 +232,15 @@ export default function App() {
                 }}
                 style={{
                   width: '100%',
-                  padding: '12px 14px 12px 46px',
-                  borderRadius: '10px',
-                  border: passwordError ? '2px solid #EF4444' : '1px solid #E1E8ED',
+                  padding: '14px 16px 14px 48px',
+                  borderRadius: '12px',
+                  border: passwordError ? '2px solid #EF4444' : '1px solid #CBD5E1',
                   fontSize: '1rem',
+                  fontWeight: '500',
                   outline: 'none',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.2s',
+                  backgroundColor: '#F8FAFC'
                 }}
                 autoFocus
                 required
@@ -259,8 +254,9 @@ export default function App() {
                   alignItems: 'center',
                   gap: '6px',
                   color: '#EF4444',
-                  fontSize: '0.825rem',
-                  marginBottom: '16px',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  marginBottom: '18px',
                   justifyContent: 'center'
                 }}
               >
@@ -268,22 +264,26 @@ export default function App() {
               </div>
             )}
 
+            {/* Botão de Acesso */}
             <button
               type="submit"
               style={{
                 width: '100%',
                 backgroundColor: '#F3921F',
                 color: '#FFFFFF',
-                padding: '14px',
-                borderRadius: '10px',
+                padding: '15px',
+                borderRadius: '12px',
                 border: 'none',
                 fontWeight: 700,
-                fontSize: '1rem',
+                fontSize: '1.05rem',
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(243, 146, 31, 0.3)'
+                boxShadow: '0 4px 14px rgba(243, 146, 31, 0.4)',
+                transition: 'transform 0.15s ease, background-color 0.15s ease'
               }}
+              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#D97E16')}
+              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#F3921F')}
             >
-              🔓 Acessar Painel
+              Acessar Painel
             </button>
           </form>
         </div>
@@ -297,7 +297,7 @@ export default function App() {
       {/* Header JLE Telecom */}
       <header className="app-header">
         <div className="header-brand">
-          <img src="/jle_logo.png" alt="JLE Telecom Logo" className="header-logo" />
+          <img src={jleLogo} alt="JLE Telecom Logo" className="header-logo" />
           <div>
             <h1>Contas Fixas Financeiro</h1>
             <p style={{ fontSize: '0.75rem', color: '#D1E4F0' }}>
