@@ -19,7 +19,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 temp/
-*.png
 
 # Editor & OS files
 .vscode/*
