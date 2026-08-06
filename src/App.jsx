@@ -296,37 +296,37 @@ export default function App() {
     <div className="app-container">
       {/* Header JLE Telecom */}
       <header className="app-header">
-        <div className="header-brand" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="header-brand">
           {/* Logo JLE Branco Transparente (Modo Escuro para o Cabeçalho Azul) */}
-          <img src={jleLogoHeader} alt="JLE Telecom Logo Branco" style={{ height: '48px', objectFit: 'contain' }} />
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+          <img src={jleLogoHeader} alt="JLE Telecom Logo Branco" className="header-logo-img" />
+          <h1 className="header-title">
             Contas Fixas Financeiro
           </h1>
         </div>
 
         <div className="header-controls">
-          <button className="btn btn-outline" onClick={goToToday}>
+          <button className="btn btn-outline btn-today" onClick={goToToday}>
             Hoje
           </button>
 
           <div className="month-nav">
-            <button className="btn-icon" onClick={prevMonth}>
+            <button className="btn-icon" onClick={prevMonth} aria-label="Mês anterior">
               <ChevronLeft size={20} />
             </button>
             <span className="month-title">
               {mesesPt[currentMonth - 1]} {currentYear}
             </span>
-            <button className="btn-icon" onClick={nextMonth}>
+            <button className="btn-icon" onClick={nextMonth} aria-label="Próximo mês">
               <ChevronRight size={20} />
             </button>
           </div>
 
-          <button className="btn btn-primary" onClick={openAddModal}>
-            <Plus size={18} /> Nova Conta
+          <button className="btn btn-primary btn-add" onClick={openAddModal}>
+            <Plus size={18} /> <span className="btn-add-text">Nova Conta</span>
           </button>
 
-          <button className="btn btn-outline" onClick={handleLogout} title="Sair do Painel">
-            <LogOut size={18} /> Sair
+          <button className="btn btn-outline btn-logout" onClick={handleLogout} title="Sair do Painel">
+            <LogOut size={18} /> <span className="btn-logout-text">Sair</span>
           </button>
         </div>
       </header>
@@ -348,30 +348,33 @@ export default function App() {
             const dayNum = index + 1;
             const isToday = isCurrentMonthActual && today.getDate() === dayNum;
             const dayBills = contas.filter((c) => c.dia_vencimento === dayNum);
+            const hasBills = dayBills.length > 0;
 
             return (
-              <div key={dayNum} className={`day-cell ${isToday ? 'is-today' : ''}`}>
+              <div key={dayNum} className={`day-cell ${isToday ? 'is-today' : ''} ${hasBills ? 'has-bills' : 'empty-day'}`}>
                 <div className="day-cell-header">
                   <span className="day-number">{dayNum}</span>
-                  {dayBills.length > 0 && (
-                    <span style={{ fontSize: '0.7rem', color: '#5C7585', fontWeight: 600 }}>
+                  {hasBills && (
+                    <span className="bill-count-badge">
                       {dayBills.length} conta(s)
                     </span>
                   )}
                 </div>
 
-                <div className="bills-list">
-                  {dayBills.map((bill) => (
-                    <div
-                      key={bill.id}
-                      className="bill-pill pending"
-                      onClick={() => openEditModal(bill)}
-                      title="Clique para editar ou excluir esta conta"
-                    >
-                      <span className="bill-title">{bill.descricao}</span>
-                    </div>
-                  ))}
-                </div>
+                {hasBills && (
+                  <div className="bills-list">
+                    {dayBills.map((bill) => (
+                      <div
+                        key={bill.id}
+                        className="bill-pill pending"
+                        onClick={() => openEditModal(bill)}
+                        title="Clique para editar ou excluir esta conta"
+                      >
+                        <span className="bill-title">{bill.descricao}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
