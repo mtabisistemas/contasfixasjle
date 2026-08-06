@@ -11,9 +11,9 @@ import {
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured, INITIAL_MOCK_CONTAS } from './supabaseClient';
 
-// Logos Oficiais da JLE Telecom
-const jleLogoWhite = '/jle_logo_white.png';
-const jleLogoDark = '/jle_logo_dark.png';
+// Logos Oficiais da JLE Telecom conforme especificado pelo usuário
+const jleLogoLogin = '/jle_logo_login.png';   // Logo Azul (Texto em azul escuro para o card de login branco)
+const jleLogoHeader = '/jle_logo_header.png'; // Logo Branco (Texto em branco transparente para o cabeçalho escuro)
 
 const REQUIRED_PASSWORD = 'Jle@2026';
 
@@ -84,7 +84,6 @@ export default function App() {
         if (!error && data && data.length > 0) {
           setContas(data);
         } else if (!error && data && data.length === 0) {
-          // Se a tabela no Supabase estiver sem registros, auto-popula as 27 contas
           const contasToInsert = INITIAL_MOCK_CONTAS.map(({ id, ...rest }) => rest);
           const { data: insertedData } = await supabase.from('contas').insert(contasToInsert).select();
           if (insertedData) {
@@ -139,7 +138,6 @@ export default function App() {
     }
 
     closeFormModal();
-    // Recarrega do Supabase imediatamente para garantir sincronia
     await loadData();
   };
 
@@ -188,7 +186,7 @@ export default function App() {
   const today = new Date();
   const isCurrentMonthActual = today.getFullYear() === currentYear && today.getMonth() + 1 === currentMonth;
 
-  // ---------------- TELA DE BLOQUEIO / LOGIN COM LOGO MODO ESCURO ----------------
+  // ---------------- TELA DE BLOQUEIO / LOGIN COM LOGO JLE AZUL ----------------
   if (!isAuthenticated) {
     return (
       <div
@@ -213,11 +211,11 @@ export default function App() {
             textAlign: 'center'
           }}
         >
-          {/* Logo JLE Telecom Modo Escuro (Texto Azul Escuro / Círculo Laranja) */}
+          {/* Logo JLE Telecom Azul (Para o Card de Login Branco) */}
           <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'center' }}>
             <img
-              src={jleLogoDark}
-              alt="JLE Telecom Logo"
+              src={jleLogoLogin}
+              alt="JLE Telecom Logo Azul"
               style={{ maxHeight: '90px', maxWidth: '100%', objectFit: 'contain' }}
             />
           </div>
@@ -293,14 +291,14 @@ export default function App() {
     );
   }
 
-  // ---------------- TELA PRINCIPAL DO CALENDÁRIO COM LOGO BRANCO NO CABEÇALHO ----------------
+  // ---------------- TELA PRINCIPAL DO CALENDÁRIO COM LOGO JLE BRANCO MODO ESCURO ----------------
   return (
     <div className="app-container">
       {/* Header JLE Telecom */}
       <header className="app-header">
         <div className="header-brand" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Logo Branco Transparente sobre o Fundo Azul Marinho do Cabeçalho */}
-          <img src={jleLogoWhite} alt="JLE Telecom Logo" style={{ height: '45px', objectFit: 'contain' }} />
+          {/* Logo JLE Branco Transparente (Modo Escuro para o Cabeçalho Azul) */}
+          <img src={jleLogoHeader} alt="JLE Telecom Logo Branco" style={{ height: '48px', objectFit: 'contain' }} />
           <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
             Contas Fixas Financeiro
           </h1>
