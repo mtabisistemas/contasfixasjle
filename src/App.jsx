@@ -78,8 +78,11 @@ export default function App() {
           .eq('ativa', true)
           .order('dia_vencimento', { ascending: true });
 
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
           setContas(data);
+        } else {
+          // Se ainda não houver contas no Supabase, exibe a lista padrão das 27 contas
+          setContas(INITIAL_MOCK_CONTAS);
         }
       } else {
         const savedContas = localStorage.getItem('contas_fixas_data');
@@ -92,6 +95,7 @@ export default function App() {
       }
     } catch (err) {
       console.error('Erro ao carregar contas:', err);
+      setContas(INITIAL_MOCK_CONTAS);
     } finally {
       setLoading(false);
     }
@@ -124,6 +128,7 @@ export default function App() {
       if (isSupabaseConfigured && supabase) {
         const { data } = await supabase.from('contas').insert([newBill]).select();
         if (data) setContas([...contas, data[0]]);
+        else setContas([...contas, { ...newBill, id: Date.now() }]);
       } else {
         const billWithId = { ...newBill, id: Date.now() };
         const updated = [...contas, billWithId];
@@ -137,7 +142,7 @@ export default function App() {
 
   // Excluir Conta
   const handleDeleteBill = async (contaId) => {
-    if (confirm('Tem certeza que deseja excluir esta conta permanente?')) {
+    if (confirm('Tem certeza que deseja excluir esta conta permanentemente?')) {
       if (isSupabaseConfigured && supabase) {
         await supabase.from('contas').delete().eq('id', contaId);
       }
@@ -180,7 +185,7 @@ export default function App() {
   const today = new Date();
   const isCurrentMonthActual = today.getFullYear() === currentYear && today.getMonth() + 1 === currentMonth;
 
-  // ---------------- TELA DE BLOQUEIO MINIMALISTA E NÍTIDA ----------------
+  // ---------------- TELA DE BLOQUEIO / LOGIN COM SENHA ----------------
   if (!isAuthenticated) {
     return (
       <div
@@ -215,7 +220,6 @@ export default function App() {
           </div>
 
           <form onSubmit={handleLogin}>
-            {/* Campo de Senha Nítido */}
             <div style={{ position: 'relative', marginBottom: '20px' }}>
               <KeyRound
                 size={20}
@@ -239,7 +243,6 @@ export default function App() {
                   fontWeight: '500',
                   outline: 'none',
                   boxSizing: 'border-box',
-                  transition: 'border-color 0.2s',
                   backgroundColor: '#F8FAFC'
                 }}
                 autoFocus
@@ -264,7 +267,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Botão de Acesso */}
             <button
               type="submit"
               style={{
@@ -277,11 +279,8 @@ export default function App() {
                 fontWeight: 700,
                 fontSize: '1.05rem',
                 cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(243, 146, 31, 0.4)',
-                transition: 'transform 0.15s ease, background-color 0.15s ease'
+                boxShadow: '0 4px 14px rgba(243, 146, 31, 0.4)'
               }}
-              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#D97E16')}
-              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#F3921F')}
             >
               Acessar Painel
             </button>
@@ -297,13 +296,12 @@ export default function App() {
       {/* Header JLE Telecom */}
       <header className="app-header">
         <div className="header-brand">
-          <img src={jleLogo} alt="JLE Telecom Logo" className="header-logo" />
-          <div>
-            <h1>Contas Fixas Financeiro</h1>
-            <p style={{ fontSize: '0.75rem', color: '#D1E4F0' }}>
-              {isSupabaseConfigured ? '🟢 Conectado ao Supabase Cloud' : '🟡 Modo Local'}
-            </p>
+          <div style={{ background: '#FFFFFF', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center' }}>
+            <img src={jleLogo} alt="JLE Telecom Logo" style={{ height: '38px', objectFit: 'contain' }} />
           </div>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+            Contas Fixas Financeiro
+          </h1>
         </div>
 
         <div className="header-controls">
