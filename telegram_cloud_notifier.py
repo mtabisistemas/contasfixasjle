@@ -11,7 +11,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "https://vvbekmpzfznrfbhmxwah.supabase.
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YmVrbXB6ZnpucmZiaG14d2FoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjA0NTExMSwiZXhwIjoyMTAxNjIxMTExfQ.KUICQoXFJWOaqLqgV7kx6FesCT0OudpUmO-FB7Yrsbo")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8776974965:AAGGvVaHwUqINKrIxcGg0jTa6UN7vy-KekU")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "-5302287820")
-WEB_APP_URL = os.getenv("WEB_APP_URL", "https://jle-contas-fixas.vercel.app")
+WEB_APP_URL = os.getenv("WEB_APP_URL", "https://contasfixasjle.vercel.app")
 
 def get_font(size: int, bold: bool = False):
     font_names = ["arialbd.ttf" if bold else "arial.ttf", "segoeui.ttf", "calibri.ttf"]
@@ -63,7 +63,8 @@ def fetch_contas():
             headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"}
         )
         with urllib.request.urlopen(req_contas) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+            data = json.loads(resp.read().decode("utf-8"))
+            return data if data else get_mock_contas()
     except Exception as e:
         print("Aviso Supabase (usando contas padrão):", e)
         return get_mock_contas()
@@ -107,10 +108,8 @@ def gerar_imagem_calendario(contas, mes: int, ano: int) -> str:
     if os.path.exists(logo_path):
         try:
             logo_img = Image.open(logo_path).convert("RGBA")
-            # Ajusta o tamanho proporcionalmente
             logo_img.thumbnail((140, 75))
             
-            # Cola a imagem com suporte a canal Alfa transparente no cabeçalho azul marinho
             logo_y = (HEADER_HEIGHT - logo_img.height) // 2
             img.paste(logo_img, (MARGIN, logo_y), logo_img)
             text_x_offset = MARGIN + logo_img.width + 20
@@ -182,7 +181,7 @@ def gerar_imagem_calendario(contas, mes: int, ano: int) -> str:
     return file_path
 
 def send_telegram_photo(photo_path: str, caption: str):
-    """Envia a foto com o botão inline para ajustar contas."""
+    """Envia a foto com o botão inline 'Calendário (Senha Jle@2026)'."""
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
     boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
     
@@ -190,7 +189,7 @@ def send_telegram_photo(photo_path: str, caption: str):
         "inline_keyboard": [
             [
                 {
-                    "text": "⚙️ Ajustar / Editar Contas (Painel JLE)",
+                    "text": "Calendário (Senha Jle@2026)",
                     "url": WEB_APP_URL
                 }
             ]
@@ -235,7 +234,7 @@ def send_telegram_photo(photo_path: str, caption: str):
         headers={"Content-Type": f"multipart/form-data; boundary={boundary}"}
     )
     with urllib.request.urlopen(req) as resp:
-        print("Notificação JLE com Vencimentos dos Próximos 3 Dias enviada com sucesso!")
+        print("Notificação JLE enviada com sucesso para o Telegram com o novo botão!")
 
 def main():
     agora = datetime.datetime.now()
@@ -275,9 +274,6 @@ def main():
                 mensagem.append(f"• *Dia {dia_f:02d} ({dia_semana})*: {c['descricao']}")
     else:
         mensagem.append("✨ Nenhuma conta agendada para os próximos 3 dias.")
-
-    # 3. Informação da Senha de Acesso em código mono para fácil cópia no Telegram
-    mensagem.append("\n🔑 *Senha do Painel:* `Jle@2026` _(Clique para copiar)_")
 
     caption = "\n".join(mensagem)
     send_telegram_photo(photo_path, caption)
