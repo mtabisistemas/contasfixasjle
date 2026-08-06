@@ -368,11 +368,11 @@ export default function App() {
             href="/Guia_de_Uso_Contas_Fixas.pdf"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-outline btn-guide"
-            title="Abrir Manual / Guia de Uso em PDF"
-            style={{ textDecoration: 'none' }}
+            className="btn-icon"
+            title="Guia de Uso em PDF"
+            style={{ textDecoration: 'none', color: '#FFFFFF' }}
           >
-            <BookOpen size={16} /> <span className="btn-guide-text">Guia PDF</span>
+            <BookOpen size={20} />
           </a>
 
           <button className="btn btn-outline btn-logout" onClick={handleLogout} title="Sair do Painel">
