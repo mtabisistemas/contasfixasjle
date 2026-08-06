@@ -1,0 +1,391 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Identidade Visual JLE Telecom */
+  --jle-blue: #104E70;
+  --jle-blue-dark: #0B334B;
+  --jle-blue-light: #186691;
+  --jle-orange: #F3921F;
+  --jle-orange-hover: #D97e16;
+
+  --bg-main: #F4F7F9;
+  --bg-card: #FFFFFF;
+  --text-main: #0E2938;
+  --text-muted: #5C7585;
+  --border: #E1E8ED;
+  --success: #10B981;
+  --success-bg: #E6F8F2;
+  --danger: #EF4444;
+  --danger-bg: #FDF2F2;
+  --today-bg: #FEF6EC;
+  --today-border: #F3921F;
+  --radius: 12px;
+  --shadow: 0 4px 12px rgba(16, 78, 112, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header JLE Telecom */
+.app-header {
+  background: linear-gradient(135deg, var(--jle-blue-dark) 0%, var(--jle-blue) 100%);
+  color: #FFFFFF;
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(11, 51, 75, 0.25);
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 3px solid var(--jle-orange);
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-logo {
+  height: 46px;
+  object-fit: contain;
+  background: white;
+  padding: 4px 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.header-brand h1 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: rgba(255, 255, 255, 0.12);
+  padding: 4px 14px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+
+.month-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  min-width: 170px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #FFFFFF;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--jle-orange);
+  color: white;
+  box-shadow: 0 4px 10px rgba(243, 146, 31, 0.3);
+}
+.btn-primary:hover {
+  background-color: var(--jle-orange-hover);
+  transform: translateY(-1px);
+}
+
+.btn-icon {
+  background: transparent;
+  color: white;
+  padding: 6px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-icon:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-outline {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Barra de Progresso JLE */
+.progress-bar-container {
+  background-color: #0E3C57;
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: #D1E4F0;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #185275;
+}
+
+.progress-track {
+  flex: 1;
+  height: 10px;
+  background-color: #1A5478;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10B981, var(--jle-orange));
+  transition: width 0.4s ease;
+}
+
+/* Grid do Calendário */
+.calendar-main {
+  flex: 1;
+  padding: 24px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.day-name-header {
+  background-color: var(--jle-blue);
+  color: white;
+  padding: 12px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.825rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 8px;
+}
+
+.day-cell {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  min-height: 135px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.day-cell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(16, 78, 112, 0.12);
+}
+
+.day-cell.other-month {
+  background-color: #ECEFF3;
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+.day-cell.is-today {
+  background-color: var(--today-bg);
+  border-color: var(--today-border);
+  border-width: 2px;
+}
+
+.day-cell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.day-number {
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--jle-blue);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.day-cell.is-today .day-number {
+  background-color: var(--jle-orange);
+  color: white;
+}
+
+.bills-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  max-height: 115px;
+}
+
+/* Bill Pill Badge */
+.bill-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.bill-pill:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.95);
+}
+
+.bill-pill.paid {
+  background-color: var(--success-bg);
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+.bill-pill.pending {
+  background-color: var(--danger-bg);
+  color: #991B1B;
+  border: 1px solid #FECACA;
+}
+
+.bill-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+/* Modais */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(11, 51, 75, 0.65);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+.modal-content {
+  background-color: var(--bg-card);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.modal-header h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--jle-blue);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.form-input {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus {
+  border-color: var(--jle-blue);
+  box-shadow: 0 0 0 3px rgba(16, 78, 112, 0.15);
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .calendar-grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  .day-name-header {
+    display: none;
+  }
+  .day-cell {
+    min-height: auto;
+  }
+}

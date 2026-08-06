@@ -1,0 +1,32 @@
+name: Notificador Diário Telegram (Contas Fixas)
+
+on:
+  schedule:
+    # Executa todos os dias às 11:00 UTC (08:00 no horário de Brasília)
+    - cron: '0 11 * * *'
+  workflow_dispatch: # Permite disparar manualmente pelo GitHub
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Instalar Dependências
+        run: |
+          pip install Pillow
+
+      - name: Enviar Alerta Diário Telegram
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python telegram_cloud_notifier.py
