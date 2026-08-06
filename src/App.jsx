@@ -8,7 +8,8 @@ import {
   KeyRound,
   LogOut,
   AlertCircle,
-  BookOpen
+  BookOpen,
+  Download
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured, INITIAL_MOCK_CONTAS } from './supabaseClient';
 
@@ -33,6 +34,7 @@ export default function App() {
 
   // Modais
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
   const [editingBill, setEditingBill] = useState(null);
 
   // Form de Nova/Edição de Conta
@@ -364,16 +366,14 @@ export default function App() {
             <Plus size={18} /> <span className="btn-add-text">Nova Conta</span>
           </button>
 
-          <a
-            href="/Guia_de_Uso_Contas_Fixas.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
             className="btn-icon"
-            title="Guia de Uso em PDF"
-            style={{ textDecoration: 'none', color: '#FFFFFF' }}
+            onClick={() => setShowGuideModal(true)}
+            title="Guia de Uso Interativo"
+            style={{ color: '#FFFFFF' }}
           >
             <BookOpen size={20} />
-          </a>
+          </button>
 
           <button className="btn btn-outline btn-logout" onClick={handleLogout} title="Sair do Painel">
             <LogOut size={18} /> <span className="btn-logout-text">Sair</span>
@@ -526,6 +526,127 @@ export default function App() {
               >
                 {confirmModal.confirmText}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL INTERATIVO DO GUIA DE USO */}
+      {showGuideModal && (
+        <div className="modal-overlay" style={{ zIndex: 250 }} onClick={() => setShowGuideModal(false)}>
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '840px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '24px',
+              borderRadius: '20px'
+            }}
+          >
+            <div className="modal-header" style={{ alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <BookOpen size={24} color="#104E70" />
+                <h2 style={{ fontSize: '1.25rem', color: '#104E70', margin: 0 }}>
+                  Guia de Uso Oficial: Contas Fixas JLE
+                </h2>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <a
+                  href="/Guia_de_Uso_Contas_Fixas.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-outline"
+                  style={{ color: '#104E70', borderColor: '#104E70', padding: '6px 12px', fontSize: '0.825rem' }}
+                >
+                  <Download size={14} /> Baixar PDF
+                </a>
+                <button className="btn-icon" onClick={() => setShowGuideModal(false)}>
+                  <X size={20} color="#104E70" />
+                </button>
+              </div>
+            </div>
+
+            <div style={{ fontSize: '0.95rem', color: '#0E2938', lineHeight: 1.6, marginTop: 12 }}>
+              <div style={{ backgroundColor: '#EBF5FA', borderLeft: '4px solid #104E70', padding: '14px 16px', borderRadius: '8px', marginBottom: 20 }}>
+                <strong style={{ color: '#104E70', display: 'block', marginBottom: 4 }}>🤖 Automação Diária às 08:00h no Telegram</strong>
+                Todos os dias, pontualmente às <strong>08:00h da manhã</strong>, o sistema gera e envia automaticamente um relatório no grupo do Telegram <strong>Contas Fixas - Pagamentos</strong> com o botão <strong>Calendário (Senha Jle@2026)</strong>.
+              </div>
+
+              <div style={{ marginBottom: 24, textAlign: 'center' }}>
+                <img
+                  src="/NOTIFICAÇÃO GRUPO.jpg"
+                  alt="Notificação Telegram"
+                  style={{ maxWidth: '100%', maxHeight: '480px', objectFit: 'contain', borderRadius: '12px', border: '1px solid #CBD5E1', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                />
+              </div>
+
+              <h3 style={{ fontSize: '1.1rem', color: '#104E70', marginBottom: 8 }}>🔑 2. Acesso e Autenticação (Login)</h3>
+              <p style={{ marginBottom: 12 }}>
+                1. Acesse o endereço do sistema: <strong>https://contasfixasjle.vercel.app</strong><br/>
+                2. Digite a senha padrão de acesso: <code>Jle@2026</code><br/>
+                3. Clique em <strong>Acessar Painel</strong>.
+              </p>
+              <div style={{ marginBottom: 24, textAlign: 'center' }}>
+                <img
+                  src="/TELA DE LOGIN.png"
+                  alt="Tela de Login"
+                  style={{ maxWidth: '100%', borderRadius: '12px', border: '1px solid #CBD5E1' }}
+                />
+              </div>
+
+              <h3 style={{ fontSize: '1.1rem', color: '#104E70', marginBottom: 8 }}>🗓️ 3. Visão Geral do Calendário</h3>
+              <p style={{ marginBottom: 12 }}>
+                • <strong>Seletor de Mês (&lt; AGOSTO 2026 &gt;)</strong>: Alterne facilmente entre os meses.<br/>
+                • <strong>Botão "Hoje"</strong>: Retorna rapidamente para a data atual.<br/>
+                • <strong>Botão "+ Nova Conta"</strong>: Abre o formulário para lançar uma nova conta.<br/>
+                • <strong>Lista de Contas por Dia</strong>: Em dias com muitas contas, a rolagem ocorre suavemente dentro do próprio card.
+              </p>
+              <div style={{ marginBottom: 16, textAlign: 'center' }}>
+                <strong>Desktop:</strong><br/>
+                <img
+                  src="/TELA PRINCIPAL - CALENDÁRIO (DESKTOP).png"
+                  alt="Desktop"
+                  style={{ maxWidth: '100%', borderRadius: '12px', border: '1px solid #CBD5E1', marginTop: 6 }}
+                />
+              </div>
+              <div style={{ marginBottom: 24, textAlign: 'center' }}>
+                <strong>Mobile:</strong><br/>
+                <img
+                  src="/TELA PRINCIPAL - CALENDÁRIO (MOBILE).png"
+                  alt="Mobile"
+                  style={{ maxWidth: '300px', borderRadius: '12px', border: '1px solid #CBD5E1', marginTop: 6 }}
+                />
+              </div>
+
+              <h3 style={{ fontSize: '1.1rem', color: '#104E70', marginBottom: 8 }}>➕ 4. Lançar uma Nova Conta Fixa</h3>
+              <p style={{ marginBottom: 12 }}>
+                1. Clique no botão <strong>+ Nova Conta</strong> no topo.<br/>
+                2. Preencha o <strong>Dia do Vencimento (1 a 31)</strong> e a <strong>Descrição</strong>.<br/>
+                3. Clique em <strong>Salvar</strong> e confirme na mensagem do sistema.
+              </p>
+              <div style={{ marginBottom: 24, textAlign: 'center' }}>
+                <img
+                  src="/FORMULÁRIO NOVA CONTA.png"
+                  alt="Nova Conta"
+                  style={{ maxWidth: '100%', borderRadius: '12px', border: '1px solid #CBD5E1' }}
+                />
+              </div>
+
+              <h3 style={{ fontSize: '1.1rem', color: '#104E70', marginBottom: 8 }}>✏️ 5. Editar ou Excluir uma Conta Existente</h3>
+              <p style={{ marginBottom: 12 }}>
+                1. Clique diretamente sobre a conta no calendário.<br/>
+                2. <strong>Para Alterar:</strong> Modifique o dia ou descrição ➔ clique em <strong>Salvar</strong>.<br/>
+                3. <strong>Para Remover:</strong> Clique no botão vermelho <strong>Excluir</strong> ➔ confirme no alerta de segurança do sistema.
+              </p>
+              <div style={{ marginBottom: 12, textAlign: 'center' }}>
+                <img
+                  src="/EDITAR OU REMOVER CONTA EXISTENTE.png"
+                  alt="Editar ou Remover"
+                  style={{ maxWidth: '100%', borderRadius: '12px', border: '1px solid #CBD5E1' }}
+                />
+              </div>
             </div>
           </div>
         </div>

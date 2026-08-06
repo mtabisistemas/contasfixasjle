@@ -89,7 +89,7 @@ def create_guide_pdf(output_paths):
     ]))
     s1_elements.append(t_alert)
     s1_elements.append(Spacer(1, 6))
-    img1 = get_image_flowable(os.path.join(base_img_dir, "NOTIFICAÇÃO GRUPO.jpg"), max_w=460, max_h=250)
+    img1 = get_image_flowable(os.path.join(base_img_dir, "NOTIFICAÇÃO GRUPO.jpg"), max_w=460, max_h=400)
     if img1:
         s1_elements.append(img1)
     story.append(KeepTogether(s1_elements))
