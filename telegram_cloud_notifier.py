@@ -267,7 +267,7 @@ def main():
     else:
         mensagem.append("✨ *Nenhuma conta vence no dia de HOJE.*\n")
 
-    # 2. Seção VENCIMENTOS NOS PRÓXIMOS 3 DIAS (Sempre visível!)
+    # 2. Seção VENCIMENTOS NOS PRÓXIMOS 3 DIAS
     mensagem.append("🗓️ *VENCIMENTOS NOS PRÓXIMOS 3 DIAS:*")
     if proximos_dias:
         for dia_f, dia_semana, lista in proximos_dias:
@@ -275,6 +275,9 @@ def main():
                 mensagem.append(f"• *Dia {dia_f:02d} ({dia_semana})*: {c['descricao']}")
     else:
         mensagem.append("✨ Nenhuma conta agendada para os próximos 3 dias.")
+
+    # 3. Informação da Senha de Acesso em código mono para fácil cópia no Telegram
+    mensagem.append("\n🔑 *Senha do Painel:* `Jle@2026` _(Clique para copiar)_")
 
     caption = "\n".join(mensagem)
     send_telegram_photo(photo_path, caption)

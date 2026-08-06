@@ -4,76 +4,87 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  CheckCircle2,
-  XCircle,
   Settings,
   Trash2,
-  Edit2,
   X,
-  List,
-  Grid
+  Lock,
+  KeyRound,
+  LogOut,
+  AlertCircle
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured, INITIAL_MOCK_CONTAS } from './supabaseClient';
 
+const REQUIRED_PASSWORD = 'Jle@2026';
+
 export default function App() {
+  // Autenticação por Senha
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('jle_auth_session') === 'true';
+  });
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
+
+  // Estados da Aplicação
   const [currentDate, setCurrentDate] = useState(new Date());
   const [contas, setContas] = useState([]);
-  const [pagamentos, setPagamentos] = useState({}); // { conta_id: { pago_por, pago_em } }
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('calendar'); // 'calendar' ou 'list'
 
   // Modais
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
-  const [selectedBill, setSelectedBill] = useState(null);
+  const [editingBill, setEditingBill] = useState(null);
 
-  // Form de Nova Conta
-  const [novoDia, setNovoDia] = useState(1);
-  const [novaDescricao, setNovaDescricao] = useState('');
+  // Form de Nova/Edição de Conta
+  const [formDia, setFormDia] = useState(1);
+  const [formDescricao, setFormDescricao] = useState('');
 
   const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1; // 1-12
-  const mesAnoStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+  const currentMonth = currentDate.getMonth() + 1;
 
   const mesesPt = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
 
+  // Handler de Login
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (passwordInput === REQUIRED_PASSWORD) {
+      setIsAuthenticated(true);
+      setPasswordError(false);
+      localStorage.setItem('jle_auth_session', 'true');
+    } else {
+      setPasswordError(true);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('jle_auth_session');
+    setPasswordInput('');
+  };
+
   // Carrega Dados do Supabase ou LocalStorage
   useEffect(() => {
-    loadData();
-  }, [mesAnoStr]);
+    if (isAuthenticated) {
+      loadData();
+    }
+  }, [isAuthenticated, currentYear, currentMonth]);
 
   const loadData = async () => {
     setLoading(true);
     try {
       if (isSupabaseConfigured && supabase) {
-        // Busca do Supabase Real
-        const { data: dataContas, error: errContas } = await supabase
+        const { data, error } = await supabase
           .from('contas')
           .select('*')
           .eq('ativa', true)
           .order('dia_vencimento', { ascending: true });
 
-        if (!errContas && dataContas) {
-          setContas(dataContas);
-        }
-
-        const { data: dataPags, error: errPags } = await supabase
-          .from('pagamentos')
-          .select('*')
-          .eq('mes_ano', mesAnoStr);
-
-        if (!errPags && dataPags) {
-          const pagsMap = {};
-          dataPags.forEach((p) => {
-            pagsMap[p.conta_id] = p;
-          });
-          setPagamentos(pagsMap);
+        if (!error && data) {
+          setContas(data);
         }
       } else {
-        // Fallback para LocalStorage / Mock
         const savedContas = localStorage.getItem('contas_fixas_data');
         if (savedContas) {
           setContas(JSON.parse(savedContas));
@@ -81,131 +92,216 @@ export default function App() {
           setContas(INITIAL_MOCK_CONTAS);
           localStorage.setItem('contas_fixas_data', JSON.stringify(INITIAL_MOCK_CONTAS));
         }
-
-        const savedPags = localStorage.getItem(`pagamentos_${mesAnoStr}`);
-        if (savedPags) {
-          setPagamentos(JSON.parse(savedPags));
-        } else {
-          setPagamentos({});
-        }
       }
     } catch (err) {
-      console.error('Erro ao carregar dados:', err);
+      console.error('Erro ao carregar contas:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Alternar Pagamento (Marcar como Paga / Pendente)
-  const togglePayment = async (contaId) => {
-    const isPaid = Boolean(pagamentos[contaId]);
-    const updatedPags = { ...pagamentos };
+  // Salvar Nova Conta ou Editar Existente
+  const handleSaveBill = async (e) => {
+    e.preventDefault();
+    if (!formDescricao.trim()) return;
 
-    if (isPaid) {
-      delete updatedPags[contaId];
+    const diaNum = Number(formDia);
+    const descStr = formDescricao.trim();
+
+    if (editingBill) {
+      // Atualização
       if (isSupabaseConfigured && supabase) {
         await supabase
-          .from('pagamentos')
-          .delete()
-          .eq('conta_id', contaId)
-          .eq('mes_ano', mesAnoStr);
+          .from('contas')
+          .update({ dia_vencimento: diaNum, descricao: descStr })
+          .eq('id', editingBill.id);
       }
-    } else {
-      const newPayment = {
-        conta_id: contaId,
-        mes_ano: mesAnoStr,
-        pago_por: 'Web Financeiro',
-        pago_em: new Date().toISOString()
-      };
-      updatedPags[contaId] = newPayment;
-
-      if (isSupabaseConfigured && supabase) {
-        await supabase.from('pagamentos').insert([newPayment]);
-      }
-    }
-
-    setPagamentos(updatedPags);
-    if (!isSupabaseConfigured) {
-      localStorage.setItem(`pagamentos_${mesAnoStr}`, JSON.stringify(updatedPags));
-    }
-  };
-
-  // Adicionar Nova Conta
-  const handleAddBill = async (e) => {
-    e.preventDefault();
-    if (!novaDescricao.trim()) return;
-
-    const newBill = {
-      dia_vencimento: Number(novoDia),
-      descricao: novaDescricao.trim(),
-      ativa: true
-    };
-
-    if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.from('contas').insert([newBill]).select();
-      if (data) {
-        setContas([...contas, data[0]]);
-      }
-    } else {
-      const billWithId = { ...newBill, id: Date.now() };
-      const updated = [...contas, billWithId];
+      const updated = contas.map((c) =>
+        c.id === editingBill.id ? { ...c, dia_vencimento: diaNum, descricao: descStr } : c
+      );
       setContas(updated);
-      localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
+      if (!isSupabaseConfigured) {
+        localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
+      }
+    } else {
+      // Criação
+      const newBill = { dia_vencimento: diaNum, descricao: descStr, ativa: true };
+      if (isSupabaseConfigured && supabase) {
+        const { data } = await supabase.from('contas').insert([newBill]).select();
+        if (data) setContas([...contas, data[0]]);
+      } else {
+        const billWithId = { ...newBill, id: Date.now() };
+        const updated = [...contas, billWithId];
+        setContas(updated);
+        localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
+      }
     }
 
-    setNovaDescricao('');
-    setNovoDia(1);
-    setShowAddModal(false);
+    closeFormModal();
   };
 
   // Excluir Conta
   const handleDeleteBill = async (contaId) => {
-    if (isSupabaseConfigured && supabase) {
-      await supabase.from('contas').delete().eq('id', contaId);
+    if (confirm('Tem certeza que deseja excluir esta conta permanente?')) {
+      if (isSupabaseConfigured && supabase) {
+        await supabase.from('contas').delete().eq('id', contaId);
+      }
+      const updated = contas.filter((c) => c.id !== contaId);
+      setContas(updated);
+      if (!isSupabaseConfigured) {
+        localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
+      }
+      closeFormModal();
     }
-    const updated = contas.filter((c) => c.id !== contaId);
-    setContas(updated);
-    if (!isSupabaseConfigured) {
-      localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
-    }
-    setSelectedBill(null);
   };
 
-  // Navegação de Mês
-  const prevMonth = () => {
-    setCurrentDate(new Date(currentYear, currentDate.getMonth() - 1, 1));
+  const openAddModal = () => {
+    setEditingBill(null);
+    setFormDia(1);
+    setFormDescricao('');
+    setShowAddModal(true);
   };
 
-  const nextMonth = () => {
-    setCurrentDate(new Date(currentYear, currentDate.getMonth() + 1, 1));
+  const openEditModal = (bill) => {
+    setEditingBill(bill);
+    setFormDia(bill.dia_vencimento);
+    setFormDescricao(bill.descricao);
+    setShowAddModal(true);
   };
 
-  const goToToday = () => {
-    setCurrentDate(new Date());
+  const closeFormModal = () => {
+    setShowAddModal(false);
+    setEditingBill(null);
+    setFormDescricao('');
+    setFormDia(1);
   };
 
-  // Cálculos do Calendário
-  const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1).getDay(); // 0 = Domingo
+  const prevMonth = () => setCurrentDate(new Date(currentYear, currentDate.getMonth() - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(currentYear, currentDate.getMonth() + 1, 1));
+  const goToToday = () => setCurrentDate(new Date());
+
+  const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1).getDay();
   const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-
-  const totalContas = contas.length;
-  const pagasCount = Object.keys(pagamentos).length;
-  const progressPercent = totalContas > 0 ? Math.round((pagasCount / totalContas) * 100) : 0;
-
   const today = new Date();
-  const isCurrentMonthActual =
-    today.getFullYear() === currentYear && today.getMonth() + 1 === currentMonth;
+  const isCurrentMonthActual = today.getFullYear() === currentYear && today.getMonth() + 1 === currentMonth;
 
+  // ---------------- TELA DE BLOQUEIO / LOGIN COM SENHA ----------------
+  if (!isAuthenticated) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          backgroundColor: '#0B334B',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+          fontFamily: 'Inter, sans-serif'
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '20px',
+            padding: '40px 32px',
+            maxWidth: '420px',
+            width: '100%',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+            textAlign: 'center'
+          }}
+        >
+          <img
+            src="/jle_logo.png"
+            alt="JLE Telecom Logo"
+            style={{ height: '70px', objectFit: 'contain', marginBottom: '24px' }}
+          />
+
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#104E70', marginBottom: '8px' }}>
+            Acesso Restrito - JLE Telecom
+          </h2>
+          <p style={{ fontSize: '0.875rem', color: '#5C7585', marginBottom: '28px' }}>
+            Digite a senha de acesso informada no Telegram para visualizar e ajustar as contas fixas.
+          </p>
+
+          <form onSubmit={handleLogin}>
+            <div style={{ position: 'relative', marginBottom: '20px' }}>
+              <KeyRound
+                size={20}
+                color="#5C7585"
+                style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
+              />
+              <input
+                type="password"
+                placeholder="Digite a senha..."
+                value={passwordInput}
+                onChange={(e) => {
+                  setPasswordInput(e.target.value);
+                  setPasswordError(false);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px 12px 46px',
+                  borderRadius: '10px',
+                  border: passwordError ? '2px solid #EF4444' : '1px solid #E1E8ED',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+                autoFocus
+                required
+              />
+            </div>
+
+            {passwordError && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: '#EF4444',
+                  fontSize: '0.825rem',
+                  marginBottom: '16px',
+                  justifyContent: 'center'
+                }}
+              >
+                <AlertCircle size={16} /> Senha incorreta! Tente novamente.
+              </div>
+            )}
+
+            <button
+              type="submit"
+              style={{
+                width: '100%',
+                backgroundColor: '#F3921F',
+                color: '#FFFFFF',
+                padding: '14px',
+                borderRadius: '10px',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '1rem',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(243, 146, 31, 0.3)'
+              }}
+            >
+              🔓 Acessar Painel
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------- TELA PRINCIPAL DO CALENDÁRIO ----------------
   return (
     <div className="app-container">
-      {/* Header Estilo Google Agenda - JLE Telecom */}
+      {/* Header JLE Telecom */}
       <header className="app-header">
         <div className="header-brand">
           <img src="/jle_logo.png" alt="JLE Telecom Logo" className="header-logo" />
           <div>
             <h1>Contas Fixas Financeiro</h1>
             <p style={{ fontSize: '0.75rem', color: '#D1E4F0' }}>
-              {isSupabaseConfigured ? '🟢 Conectado ao Supabase Cloud' : '🟡 Modo Local (Demo)'}
+              {isSupabaseConfigured ? '🟢 Conectado ao Supabase Cloud' : '🟡 Modo Local'}
             </p>
           </div>
         </div>
@@ -227,27 +323,17 @@ export default function App() {
             </button>
           </div>
 
-          <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+          <button className="btn btn-primary" onClick={openAddModal}>
             <Plus size={18} /> Nova Conta
           </button>
 
-          <button className="btn btn-outline" onClick={() => setShowConfigModal(true)}>
-            <Settings size={18} />
+          <button className="btn btn-outline" onClick={handleLogout} title="Sair do Painel">
+            <LogOut size={18} /> Sair
           </button>
         </div>
       </header>
 
-      {/* Barra de Progresso */}
-      <div className="progress-bar-container">
-        <span>
-          Progresso: <strong>{pagasCount}</strong> de <strong>{totalContas}</strong> contas pagas ({progressPercent}%)
-        </span>
-        <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${progressPercent}%` }}></div>
-        </div>
-      </div>
-
-      {/* Grade do Calendário */}
+      {/* Grid do Calendário */}
       <main className="calendar-main">
         <div className="calendar-grid">
           {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
@@ -256,12 +342,10 @@ export default function App() {
             </div>
           ))}
 
-          {/* Células vazias de preenchimento antes do dia 1 */}
           {Array.from({ length: firstDayOfMonth }).map((_, index) => (
             <div key={`empty-${index}`} className="day-cell other-month"></div>
           ))}
 
-          {/* Células dos Dias do Mês (1 a daysInMonth) */}
           {Array.from({ length: daysInMonth }).map((_, index) => {
             const dayNum = index + 1;
             const isToday = isCurrentMonthActual && today.getDate() === dayNum;
@@ -272,27 +356,23 @@ export default function App() {
                 <div className="day-cell-header">
                   <span className="day-number">{dayNum}</span>
                   {dayBills.length > 0 && (
-                    <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#5C7585', fontWeight: 600 }}>
                       {dayBills.length} conta(s)
                     </span>
                   )}
                 </div>
 
                 <div className="bills-list">
-                  {dayBills.map((bill) => {
-                    const isPaid = Boolean(pagamentos[bill.id]);
-                    return (
-                      <div
-                        key={bill.id}
-                        className={`bill-pill ${isPaid ? 'paid' : 'pending'}`}
-                        onClick={() => togglePayment(bill.id)}
-                        title={isPaid ? 'Clique para desmarcar pago' : 'Clique para marcar como pago'}
-                      >
-                        {isPaid ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
-                        <span className="bill-title">{bill.descricao}</span>
-                      </div>
-                    );
-                  })}
+                  {dayBills.map((bill) => (
+                    <div
+                      key={bill.id}
+                      className="bill-pill pending"
+                      onClick={() => openEditModal(bill)}
+                      title="Clique para editar ou excluir esta conta"
+                    >
+                      <span className="bill-title">{bill.descricao}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             );
@@ -300,18 +380,18 @@ export default function App() {
         </div>
       </main>
 
-      {/* MODAL: Nova Conta */}
+      {/* MODAL: Adicionar / Editar Conta */}
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+        <div className="modal-overlay" onClick={closeFormModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>➕ Adicionar Nova Conta Fixa</h2>
-              <button className="btn-icon" onClick={() => setShowAddModal(false)}>
-                <X size={20} color="#0f172a" />
+              <h2>{editingBill ? '✏️ Editar Conta Fixa' : '➕ Nova Conta Fixa'}</h2>
+              <button className="btn-icon" onClick={closeFormModal}>
+                <X size={20} color="#104E70" />
               </button>
             </div>
 
-            <form onSubmit={handleAddBill}>
+            <form onSubmit={handleSaveBill}>
               <div className="form-group" style={{ marginBottom: 16 }}>
                 <label>Dia do Vencimento (1 a 31):</label>
                 <input
@@ -319,8 +399,8 @@ export default function App() {
                   min="1"
                   max="31"
                   className="form-input"
-                  value={novoDia}
-                  onChange={(e) => setNovoDia(e.target.value)}
+                  value={formDia}
+                  onChange={(e) => setFormDia(e.target.value)}
                   required
                 />
               </div>
@@ -331,50 +411,36 @@ export default function App() {
                   type="text"
                   placeholder="Ex: Aluguel Base SC, Água, Claro NH..."
                   className="form-input"
-                  value={novaDescricao}
-                  onChange={(e) => setNovaDescricao(e.target.value)}
+                  value={formDescricao}
+                  onChange={(e) => setFormDescricao(e.target.value)}
                   required
                 />
               </div>
 
-              <div className="modal-actions">
-                <button type="button" className="btn btn-outline" style={{ color: '#0f172a' }} onClick={() => setShowAddModal(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Salvar Conta
-                </button>
+              <div className="modal-actions" style={{ justifyContent: 'space-between' }}>
+                {editingBill ? (
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{ backgroundColor: '#EF4444', color: 'white' }}
+                    onClick={() => handleDeleteBill(editingBill.id)}
+                  >
+                    <Trash2 size={16} /> Excluir
+                  </button>
+                ) : (
+                  <div></div>
+                )}
+
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button type="button" className="btn btn-outline" style={{ color: '#104E70' }} onClick={closeFormModal}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Salvar
+                  </button>
+                </div>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: Configuração Supabase */}
-      {showConfigModal && (
-        <div className="modal-overlay" onClick={() => setShowConfigModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>⚙️ Configuração do Supabase Cloud</h2>
-              <button className="btn-icon" onClick={() => setShowConfigModal(false)}>
-                <X size={20} color="#0f172a" />
-              </button>
-            </div>
-
-            <p style={{ fontSize: '0.875rem', color: '#64748b' }}>
-              Para conectar esta interface ao seu banco de dados Supabase na nuvem, adicione as chaves no arquivo <code>.env</code> do seu projeto:
-            </p>
-
-            <pre style={{ background: '#f1f5f9', padding: 12, borderRadius: 8, fontSize: '0.8rem' }}>
-{`VITE_SUPABASE_URL=https://sua-url.supabase.co
-VITE_SUPABASE_ANON_KEY=sua-chave-anonima`}
-            </pre>
-
-            <div className="modal-actions">
-              <button className="btn btn-primary" onClick={() => setShowConfigModal(false)}>
-                Entendido
-              </button>
-            </div>
           </div>
         </div>
       )}
