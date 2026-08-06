@@ -29,6 +29,11 @@
   padding: 0;
 }
 
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-main);
@@ -40,20 +45,20 @@ body {
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* Header JLE Telecom */
 .app-header {
+  flex-shrink: 0;
   background: linear-gradient(135deg, var(--jle-blue-dark) 0%, var(--jle-blue) 100%);
   color: #FFFFFF;
-  padding: 16px 28px;
+  padding: 12px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 4px 20px rgba(11, 51, 75, 0.25);
-  flex-wrap: wrap;
-  gap: 16px;
   border-bottom: 3px solid var(--jle-orange);
 }
 
@@ -64,7 +69,7 @@ body {
 }
 
 .header-logo-img {
-  height: 48px;
+  height: 44px;
   object-fit: contain;
 }
 
@@ -106,7 +111,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 18px;
+  padding: 8px 16px;
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 700;
@@ -152,18 +157,19 @@ body {
 /* Barra de Progresso JLE */
 .progress-bar-container {
   background-color: #0E3C57;
-  padding: 12px 28px;
+  padding: 10px 24px;
   display: flex;
   align-items: center;
   gap: 18px;
   color: #D1E4F0;
   font-size: 0.875rem;
   border-bottom: 1px solid #185275;
+  flex-shrink: 0;
 }
 
 .progress-track {
   flex: 1;
-  height: 10px;
+  height: 8px;
   background-color: #1A5478;
   border-radius: 999px;
   overflow: hidden;
@@ -178,50 +184,63 @@ body {
 /* Grid do Calendário */
 .calendar-main {
   flex: 1;
-  padding: 24px;
-  max-width: 1400px;
+  padding: 12px 20px;
+  max-width: 100%;
   width: 100%;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
+  grid-template-rows: min-content repeat(6, 1fr);
+  gap: 8px;
+  flex: 1;
+  height: 100%;
+  min-height: 0;
 }
 
 .day-name-header {
   background-color: var(--jle-blue);
   color: white;
-  padding: 12px;
+  padding: 6px 10px;
   text-align: center;
   font-weight: 700;
-  font-size: 0.825rem;
+  font-size: 0.775rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  border-radius: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .day-cell {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  min-height: 135px;
-  padding: 10px;
+  border-radius: 10px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
 }
 
 .day-cell:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(16, 78, 112, 0.12);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(16, 78, 112, 0.12);
 }
 
 .day-cell.other-month {
-  background-color: #ECEFF3;
-  opacity: 0.5;
+  background-color: #F1F5F9;
+  opacity: 0.45;
   box-shadow: none;
 }
 
@@ -235,15 +254,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
 .day-number {
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: var(--jle-blue);
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -258,9 +278,28 @@ body {
 .bills-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   overflow-y: auto;
-  max-height: 115px;
+  flex: 1;
+  min-height: 0;
+  padding-right: 2px;
+}
+
+.bills-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.bills-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bills-list::-webkit-scrollbar-thumb {
+  background-color: rgba(16, 78, 112, 0.2);
+  border-radius: 4px;
+}
+
+.bills-list::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(16, 78, 112, 0.4);
 }
 
 /* Bill Pill Badge */
@@ -378,9 +417,17 @@ body {
 
 /* ---------------- LAYOUT RESPONSIVO PARA MOBILE E TABLETS ---------------- */
 @media (max-width: 768px) {
-  .app-container {
+  html, body {
+    height: auto;
     overflow-x: hidden;
-    width: 100%;
+    overflow-y: auto;
+  }
+
+  .app-container {
+    height: auto;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .app-header {
