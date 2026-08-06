@@ -10,8 +10,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured, INITIAL_MOCK_CONTAS } from './supabaseClient';
-import jleLogo from './assets/jle_logo.png';
 
+const jleLogo = '/jle_logo.png';
 const REQUIRED_PASSWORD = 'Jle@2026';
 
 export default function App() {
