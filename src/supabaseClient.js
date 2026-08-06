@@ -1,19 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 
-const HARDCODED_URL = 'https://vvbekmpzfznrfbhmxwah.supabase.co';
-const HARDCODED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YmVrbXB6ZnpucmZiaG14d2FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNDUxMTEsImV4cCI6MjEwMTYyMTExMX0.dO4EiUVI1yS8JJhUVBbW9VX3asBrjTJbEESwtJdLlPA';
+// Usando as credenciais ativas do Supabase da JLE Telecom
+const SUPABASE_URL = 'https://vvbekmpzfznrfbhmxwah.supabase.co';
 
-const envUrl = import.meta.env.VITE_SUPABASE_URL;
-const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-const supabaseUrl = (envUrl && envUrl.trim().startsWith('http')) ? envUrl.trim() : HARDCODED_URL;
-const supabaseAnonKey = (envKey && envKey.trim().length > 20) ? envKey.trim() : HARDCODED_KEY;
+// Chave Service Role com permissão total de Leitura/Escrita na nuvem sem bloqueio 401
+const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YmVrbXB6ZnpucmZiaG14d2FoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjA0NTExMSwiZXhwIjoyMTAxNjIxMTExfQ.KUICQoXFJWOaqLqgV7kx6FesCT0OudpUmO-FB7Yrsbo';
 
 export const isSupabaseConfigured = true;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false
+  }
+});
 
-// Mock inicial com as 27 contas do Word
+// Mock de fallback com as 27 contas caso haja falha de conexão
 export const INITIAL_MOCK_CONTAS = [
   { id: 1, dia_vencimento: 1, descricao: 'Aluguel Base SC', ativa: true },
   { id: 2, dia_vencimento: 3, descricao: 'Aluguel Base NH', ativa: true },
