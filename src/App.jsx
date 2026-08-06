@@ -7,7 +7,8 @@ import {
   X,
   KeyRound,
   LogOut,
-  AlertCircle
+  AlertCircle,
+  BookOpen
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured, INITIAL_MOCK_CONTAS } from './supabaseClient';
 
@@ -362,6 +363,17 @@ export default function App() {
           <button className="btn btn-primary btn-add" onClick={openAddModal}>
             <Plus size={18} /> <span className="btn-add-text">Nova Conta</span>
           </button>
+
+          <a
+            href="/Guia_de_Uso_Contas_Fixas.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-outline btn-guide"
+            title="Abrir Manual / Guia de Uso em PDF"
+            style={{ textDecoration: 'none' }}
+          >
+            <BookOpen size={16} /> <span className="btn-guide-text">Guia PDF</span>
+          </a>
 
           <button className="btn btn-outline btn-logout" onClick={handleLogout} title="Sair do Painel">
             <LogOut size={18} /> <span className="btn-logout-text">Sair</span>
