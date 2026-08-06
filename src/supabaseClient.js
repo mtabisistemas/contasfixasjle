@@ -1,15 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://vvbekmpzfznrfbhmxwah.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YmVrbXB6ZnpucmZiaG14d2FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNDUxMTEsImV4cCI6MjEwMTYyMTExMX0.dO4EiUVI1yS8JJhUVBbW9VX3asBrjTJbEESwtJdLlPA';
+const HARDCODED_URL = 'https://vvbekmpzfznrfbhmxwah.supabase.co';
+const HARDCODED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YmVrbXB6ZnpucmZiaG14d2FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNDUxMTEsImV4cCI6MjEwMTYyMTExMX0.dO4EiUVI1yS8JJhUVBbW9VX3asBrjTJbEESwtJdLlPA';
 
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+const envUrl = import.meta.env.VITE_SUPABASE_URL;
+const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
+const supabaseUrl = (envUrl && envUrl.trim().startsWith('http')) ? envUrl.trim() : HARDCODED_URL;
+const supabaseAnonKey = (envKey && envKey.trim().length > 20) ? envKey.trim() : HARDCODED_KEY;
 
-// Mock inicial com as 27 contas do Word para funcionar imediatamente
+export const isSupabaseConfigured = true;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Mock inicial com as 27 contas do Word
 export const INITIAL_MOCK_CONTAS = [
   { id: 1, dia_vencimento: 1, descricao: 'Aluguel Base SC', ativa: true },
   { id: 2, dia_vencimento: 3, descricao: 'Aluguel Base NH', ativa: true },
