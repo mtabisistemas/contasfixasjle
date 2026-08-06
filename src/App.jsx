@@ -64,7 +64,7 @@ export default function App() {
     setPasswordInput('');
   };
 
-  // Carrega Dados do Supabase com auto-seed se estiver vazio
+  // Carrega Dados do Supabase
   useEffect(() => {
     if (isAuthenticated) {
       loadData();
@@ -84,7 +84,7 @@ export default function App() {
         if (!error && data && data.length > 0) {
           setContas(data);
         } else if (!error && data && data.length === 0) {
-          // Se a tabela existe mas está vazia, faz a carga automática das 27 contas no Supabase
+          // Se a tabela no Supabase estiver sem registros, auto-popula as 27 contas
           const contasToInsert = INITIAL_MOCK_CONTAS.map(({ id, ...rest }) => rest);
           const { data: insertedData } = await supabase.from('contas').insert(contasToInsert).select();
           if (insertedData) {
@@ -112,7 +112,7 @@ export default function App() {
     }
   };
 
-  // Salvar Nova Conta ou Editar Existente
+  // Salvar Nova Conta ou Editar Existente no Supabase
   const handleSaveBill = async (e) => {
     e.preventDefault();
     if (!formDescricao.trim()) return;
@@ -120,51 +120,41 @@ export default function App() {
     const diaNum = Number(formDia);
     const descStr = formDescricao.trim();
 
-    if (editingBill) {
-      if (isSupabaseConfigured && supabase) {
-        await supabase
-          .from('contas')
-          .update({ dia_vencimento: diaNum, descricao: descStr })
-          .eq('id', editingBill.id);
-      }
-      const updated = contas.map((c) =>
-        c.id === editingBill.id ? { ...c, dia_vencimento: diaNum, descricao: descStr } : c
-      );
-      setContas(updated);
-      localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
-    } else {
-      const newBill = { dia_vencimento: diaNum, descricao: descStr, ativa: true };
-      if (isSupabaseConfigured && supabase) {
-        const { data, error } = await supabase.from('contas').insert([newBill]).select();
-        if (data && data.length > 0) {
-          setContas([...contas, data[0]]);
-        } else {
-          const billWithId = { ...newBill, id: Date.now() };
-          const updated = [...contas, billWithId];
-          setContas(updated);
-          localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
+    try {
+      if (editingBill) {
+        if (isSupabaseConfigured && supabase) {
+          await supabase
+            .from('contas')
+            .update({ dia_vencimento: diaNum, descricao: descStr })
+            .eq('id', editingBill.id);
         }
       } else {
-        const billWithId = { ...newBill, id: Date.now() };
-        const updated = [...contas, billWithId];
-        setContas(updated);
-        localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
+        const newBill = { dia_vencimento: diaNum, descricao: descStr, ativa: true };
+        if (isSupabaseConfigured && supabase) {
+          await supabase.from('contas').insert([newBill]);
+        }
       }
+    } catch (err) {
+      console.error('Erro Supabase ao salvar:', err);
     }
 
     closeFormModal();
+    // Recarrega do Supabase imediatamente para garantir sincronia
+    await loadData();
   };
 
-  // Excluir Conta
+  // Excluir Conta no Supabase
   const handleDeleteBill = async (contaId) => {
     if (confirm('Tem certeza que deseja excluir esta conta permanentemente?')) {
-      if (isSupabaseConfigured && supabase) {
-        await supabase.from('contas').delete().eq('id', contaId);
+      try {
+        if (isSupabaseConfigured && supabase) {
+          await supabase.from('contas').delete().eq('id', contaId);
+        }
+      } catch (err) {
+        console.error('Erro Supabase ao excluir:', err);
       }
-      const updated = contas.filter((c) => c.id !== contaId);
-      setContas(updated);
-      localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
       closeFormModal();
+      await loadData();
     }
   };
 
