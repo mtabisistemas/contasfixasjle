@@ -1,8 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Tenta obter variáveis de ambiente se configuradas
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://vvbekmpzfznrfbhmxwah.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YmVrbXB6ZnpucmZiaG14d2FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNDUxMTEsImV4cCI6MjEwMTYyMTExMX0.dO4EiUVI1yS8JJhUVBbW9VX3asBrjTJbEESwtJdLlPA';
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
@@ -10,7 +9,7 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-// Mock inicial com as 27 contas do Word para funcionar imediatamente sem configuração inicial
+// Mock inicial com as 27 contas do Word para funcionar imediatamente
 export const INITIAL_MOCK_CONTAS = [
   { id: 1, dia_vencimento: 1, descricao: 'Aluguel Base SC', ativa: true },
   { id: 2, dia_vencimento: 3, descricao: 'Aluguel Base NH', ativa: true },

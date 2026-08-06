@@ -11,7 +11,10 @@ import {
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured, INITIAL_MOCK_CONTAS } from './supabaseClient';
 
-const jleLogo = '/jle_logo.png';
+// Logos Oficiais da JLE Telecom
+const jleLogoWhite = '/jle_logo_white.png';
+const jleLogoDark = '/jle_logo_dark.png';
+
 const REQUIRED_PASSWORD = 'Jle@2026';
 
 export default function App() {
@@ -61,7 +64,7 @@ export default function App() {
     setPasswordInput('');
   };
 
-  // Carrega Dados do Supabase ou LocalStorage
+  // Carrega Dados do Supabase com auto-seed se estiver vazio
   useEffect(() => {
     if (isAuthenticated) {
       loadData();
@@ -80,8 +83,16 @@ export default function App() {
 
         if (!error && data && data.length > 0) {
           setContas(data);
+        } else if (!error && data && data.length === 0) {
+          // Se a tabela existe mas está vazia, faz a carga automática das 27 contas no Supabase
+          const contasToInsert = INITIAL_MOCK_CONTAS.map(({ id, ...rest }) => rest);
+          const { data: insertedData } = await supabase.from('contas').insert(contasToInsert).select();
+          if (insertedData) {
+            setContas(insertedData);
+          } else {
+            setContas(INITIAL_MOCK_CONTAS);
+          }
         } else {
-          // Se ainda não houver contas no Supabase, exibe a lista padrão das 27 contas
           setContas(INITIAL_MOCK_CONTAS);
         }
       } else {
@@ -120,15 +131,19 @@ export default function App() {
         c.id === editingBill.id ? { ...c, dia_vencimento: diaNum, descricao: descStr } : c
       );
       setContas(updated);
-      if (!isSupabaseConfigured) {
-        localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
-      }
+      localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
     } else {
       const newBill = { dia_vencimento: diaNum, descricao: descStr, ativa: true };
       if (isSupabaseConfigured && supabase) {
-        const { data } = await supabase.from('contas').insert([newBill]).select();
-        if (data) setContas([...contas, data[0]]);
-        else setContas([...contas, { ...newBill, id: Date.now() }]);
+        const { data, error } = await supabase.from('contas').insert([newBill]).select();
+        if (data && data.length > 0) {
+          setContas([...contas, data[0]]);
+        } else {
+          const billWithId = { ...newBill, id: Date.now() };
+          const updated = [...contas, billWithId];
+          setContas(updated);
+          localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
+        }
       } else {
         const billWithId = { ...newBill, id: Date.now() };
         const updated = [...contas, billWithId];
@@ -148,9 +163,7 @@ export default function App() {
       }
       const updated = contas.filter((c) => c.id !== contaId);
       setContas(updated);
-      if (!isSupabaseConfigured) {
-        localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
-      }
+      localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
       closeFormModal();
     }
   };
@@ -185,7 +198,7 @@ export default function App() {
   const today = new Date();
   const isCurrentMonthActual = today.getFullYear() === currentYear && today.getMonth() + 1 === currentMonth;
 
-  // ---------------- TELA DE BLOQUEIO / LOGIN COM SENHA ----------------
+  // ---------------- TELA DE BLOQUEIO / LOGIN COM LOGO MODO ESCURO ----------------
   if (!isAuthenticated) {
     return (
       <div
@@ -210,12 +223,12 @@ export default function App() {
             textAlign: 'center'
           }}
         >
-          {/* Logo JLE Telecom */}
+          {/* Logo JLE Telecom Modo Escuro (Texto Azul Escuro / Círculo Laranja) */}
           <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'center' }}>
             <img
-              src={jleLogo}
+              src={jleLogoDark}
               alt="JLE Telecom Logo"
-              style={{ maxHeight: '85px', maxWidth: '100%', objectFit: 'contain' }}
+              style={{ maxHeight: '90px', maxWidth: '100%', objectFit: 'contain' }}
             />
           </div>
 
@@ -290,15 +303,14 @@ export default function App() {
     );
   }
 
-  // ---------------- TELA PRINCIPAL DO CALENDÁRIO ----------------
+  // ---------------- TELA PRINCIPAL DO CALENDÁRIO COM LOGO BRANCO NO CABEÇALHO ----------------
   return (
     <div className="app-container">
       {/* Header JLE Telecom */}
       <header className="app-header">
-        <div className="header-brand">
-          <div style={{ background: '#FFFFFF', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center' }}>
-            <img src={jleLogo} alt="JLE Telecom Logo" style={{ height: '38px', objectFit: 'contain' }} />
-          </div>
+        <div className="header-brand" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Logo Branco Transparente sobre o Fundo Azul Marinho do Cabeçalho */}
+          <img src={jleLogoWhite} alt="JLE Telecom Logo" style={{ height: '45px', objectFit: 'contain' }} />
           <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
             Contas Fixas Financeiro
           </h1>
