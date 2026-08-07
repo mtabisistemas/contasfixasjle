@@ -9,7 +9,10 @@ import {
   LogOut,
   AlertCircle,
   BookOpen,
-  Download
+  Download,
+  Calendar as CalendarIcon,
+  Clock,
+  Edit2
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured, INITIAL_MOCK_CONTAS } from './supabaseClient';
 
@@ -35,7 +38,11 @@ export default function App() {
   // Modais
   const [showAddModal, setShowAddModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null); // Dia selecionado para o Pop-up central
   const [editingBill, setEditingBill] = useState(null);
+
+  // Modal de Confirmação de Exclusão
+  const [billToDelete, setBillToDelete] = useState(null);
 
   // Form de Nova/Edição de Conta
   const [formDia, setFormDia] = useState(1);
@@ -114,38 +121,11 @@ export default function App() {
     }
   };
 
-  // State do Modal de Confirmação do Sistema
-  const [confirmModal, setConfirmModal] = useState({
-    isOpen: false,
-    title: '',
-    message: '',
-    confirmText: '',
-    confirmVariant: 'primary',
-    onConfirm: null,
-  });
-
-  // Requisitar Salvar com Confirmação do Sistema
-  const handleSaveBill = (e) => {
+  // Salvar Nova Conta ou Editar Existente no Supabase
+  const handleSaveBill = async (e) => {
     e.preventDefault();
     if (!formDescricao.trim()) return;
 
-    const descStr = formDescricao.trim();
-    const diaNum = Number(formDia);
-    const actionText = editingBill ? 'salvar as alterações da' : 'cadastrar a nova';
-
-    setConfirmModal({
-      isOpen: true,
-      title: editingBill ? '✏️ Confirmar Alterações' : '➕ Confirmar Nova Conta',
-      message: `Deseja ${actionText} conta "${descStr}" com vencimento no dia ${diaNum}?`,
-      confirmText: editingBill ? 'Salvar' : 'Cadastrar',
-      confirmVariant: 'primary',
-      onConfirm: () => executeSaveBill(),
-    });
-  };
-
-  // Executar Salvar no Supabase
-  const executeSaveBill = async () => {
-    setConfirmModal({ isOpen: false });
     const diaNum = Number(formDia);
     const descStr = formDescricao.trim();
 
@@ -171,37 +151,35 @@ export default function App() {
     await loadData();
   };
 
-  // Requisitar Excluir com Confirmação do Sistema
-  const handleDeleteBill = (bill) => {
-    setConfirmModal({
-      isOpen: true,
-      title: '⚠️ Confirmar Exclusão',
-      message: `Tem certeza de que deseja excluir a conta "${bill.descricao}" permanentemente?`,
-      confirmText: 'Sim, Excluir',
-      confirmVariant: 'danger',
-      onConfirm: () => executeDeleteBill(bill.id),
-    });
+  // Solicitar Confirmação de Exclusão
+  const confirmDeleteBill = (conta) => {
+    setBillToDelete(conta);
   };
 
-  // Executar Exclusão no Supabase
-  const executeDeleteBill = async (contaId) => {
-    setConfirmModal({ isOpen: false });
+  // Excluir Conta Definitivamente
+  const executeDeleteBill = async () => {
+    if (!billToDelete) return;
     try {
       if (isSupabaseConfigured && supabase) {
-        await supabase.from('contas').delete().eq('id', contaId);
+        await supabase.from('contas').delete().eq('id', billToDelete.id);
       }
     } catch (err) {
       console.error('Erro Supabase ao excluir:', err);
     }
+    setBillToDelete(null);
     closeFormModal();
     await loadData();
   };
 
-  const openAddModal = () => {
+  const openAddModalForDay = (day) => {
     setEditingBill(null);
-    setFormDia(1);
+    setFormDia(day);
     setFormDescricao('');
     setShowAddModal(true);
+  };
+
+  const openAddModal = () => {
+    openAddModalForDay(selectedDay || 1);
   };
 
   const openEditModal = (bill) => {
@@ -332,13 +310,17 @@ export default function App() {
     );
   }
 
-  // ---------------- TELA PRINCIPAL DO CALENDÁRIO COM LOGO JLE BRANCO MODO ESCURO ----------------
+  // Contas do Dia Selecionado para o Pop-up
+  const selectedDayBills = selectedDay
+    ? contas.filter((c) => c.dia_vencimento === selectedDay)
+    : [];
+
+  // ---------------- TELA PRINCIPAL DO CALENDÁRIO COM LOGO JLE BRANCO ----------------
   return (
     <div className="app-container">
       {/* Header JLE Telecom */}
       <header className="app-header">
         <div className="header-brand">
-          {/* Logo JLE Branco Transparente (Modo Escuro para o Cabeçalho Azul) */}
           <img src={jleLogoHeader} alt="JLE Telecom Logo Branco" className="header-logo-img" />
           <h1 className="header-title">
             Contas Fixas Financeiro
@@ -346,7 +328,6 @@ export default function App() {
         </div>
 
         <div className="header-controls">
-
           <div className="month-nav">
             <button className="btn-icon" onClick={prevMonth} aria-label="Mês anterior">
               <ChevronLeft size={20} />
@@ -359,14 +340,15 @@ export default function App() {
             </button>
           </div>
 
-          <button className="btn btn-primary btn-add" onClick={openAddModal}>
-            <Plus size={18} /> <span className="btn-add-text">Nova Conta</span>
+          <button className="btn btn-primary" onClick={openAddModal}>
+            <Plus size={18} /> Nova Conta
           </button>
 
-          <button
-            className="btn-icon"
-            onClick={() => setShowGuideModal(true)}
-            title="Guia de Uso Interativo"
+          <button 
+            className="btn btn-icon btn-guide" 
+            onClick={() => setShowGuideModal(true)} 
+            title="Guia Interativo de Uso"
+            aria-label="Guia de Uso"
             style={{ color: '#FFFFFF' }}
           >
             <BookOpen size={20} />
@@ -398,7 +380,13 @@ export default function App() {
             const hasBills = dayBills.length > 0;
 
             return (
-              <div key={dayNum} className={`day-cell ${isToday ? 'is-today' : ''} ${hasBills ? 'has-bills' : 'empty-day'}`}>
+              <div
+                key={dayNum}
+                className={`day-cell ${isToday ? 'is-today' : ''} ${hasBills ? 'has-bills' : 'empty-day'}`}
+                onClick={() => setSelectedDay(dayNum)}
+                style={{ cursor: 'pointer' }}
+                title={`Clique para visualizar todas as contas do dia ${dayNum}`}
+              >
                 <div className="day-cell-header">
                   <span className="day-number">{dayNum}</span>
                   {hasBills && (
@@ -410,16 +398,19 @@ export default function App() {
 
                 {hasBills && (
                   <div className="bills-list">
-                    {dayBills.map((bill) => (
+                    {dayBills.slice(0, 3).map((bill) => (
                       <div
                         key={bill.id}
                         className="bill-pill pending"
-                        onClick={() => openEditModal(bill)}
-                        title="Clique para editar ou excluir esta conta"
                       >
                         <span className="bill-title">{bill.descricao}</span>
                       </div>
                     ))}
+                    {dayBills.length > 3 && (
+                      <div className="bills-more-tag">
+                        + {dayBills.length - 3} mais...
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -428,13 +419,190 @@ export default function App() {
         </div>
       </main>
 
+      {/* ---------------- MODAL POP-UP CENTRAL DO DIA SELECIONADO ---------------- */}
+      {selectedDay !== null && (
+        <div className="modal-overlay" onClick={() => setSelectedDay(null)}>
+          <div className="modal-content day-popup-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header day-popup-header">
+              <div>
+                <h2>📅 Dia {selectedDay} de {mesesPt[currentMonth - 1]}</h2>
+                <p className="day-popup-subtitle">
+                  {selectedDayBills.length === 0
+                    ? 'Nenhuma conta agendada para este dia'
+                    : `${selectedDayBills.length} conta(s) fixa(s) com vencimento neste dia`}
+                </p>
+              </div>
+              <button className="btn-icon" onClick={() => setSelectedDay(null)} aria-label="Fechar">
+                <X size={20} color="#104E70" />
+              </button>
+            </div>
+
+            <div className="day-popup-body">
+              {selectedDayBills.length === 0 ? (
+                <div className="empty-day-state">
+                  <Clock size={40} color="#94A3B8" />
+                  <p>Nenhuma conta cadastrada para o dia {selectedDay}.</p>
+                </div>
+              ) : (
+                <div className="day-bills-interactive-list">
+                  {selectedDayBills.map((bill) => (
+                    <div
+                      key={bill.id}
+                      className="day-bill-card-item"
+                      onClick={() => openEditModal(bill)}
+                      title="Clique sobre a conta para abrir o formulário de edição/exclusão"
+                    >
+                      <div className="day-bill-card-info">
+                        <span className="day-bill-tag">Dia {bill.dia_vencimento}</span>
+                        <span className="day-bill-name">{bill.descricao}</span>
+                      </div>
+                      <div className="day-bill-card-action">
+                        <Edit2 size={16} color="#F3921F" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions day-popup-footer">
+              <button
+                className="btn btn-primary"
+                style={{ width: '100%' }}
+                onClick={() => openAddModalForDay(selectedDay)}
+              >
+                <Plus size={18} /> Adicionar Conta neste dia
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Guia Interativo de Uso */}
+      {showGuideModal && (
+        <div className="modal-overlay" onClick={() => setShowGuideModal(false)}>
+          <div className="modal-content modal-guide" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📖 Guia de Uso - Sistema Contas Fixas JLE Telecom</h2>
+              <button className="btn-icon" onClick={() => setShowGuideModal(false)} aria-label="Fechar Guia">
+                <X size={20} color="#104E70" />
+              </button>
+            </div>
+
+            <div className="guide-body">
+              {/* Botão de Download PDF */}
+              <div className="guide-download-banner">
+                <div>
+                  <h3>Manual Completo em PDF</h3>
+                  <p>Baixe o arquivo PDF oficial com fotos explicativas em alta resolução.</p>
+                </div>
+                <a 
+                  href="/Guia_de_Uso_Contas_Fixas.pdf" 
+                  download="Guia_de_Uso_Contas_Fixas.pdf" 
+                  className="btn btn-primary btn-download"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Download size={18} /> Baixar PDF Oficial
+                </a>
+              </div>
+
+              <div className="guide-sections-scroll">
+                {/* Seção 1: Notificações Diárias no Telegram */}
+                <section className="guide-section">
+                  <h3>1. 📱 Notificações Diárias no Grupo do Telegram</h3>
+                  <p>
+                    Todos os dias, pontualmente às <strong>08:00 AM</strong>, o robô da JLE Telecom envia automaticamente 
+                    um cartão visual no grupo do Telegram.
+                  </p>
+                  <ul>
+                    <li><strong>Vencimentos de Hoje:</strong> exibe as contas a vencer no dia atual.</li>
+                    <li><strong>Próximos 3 Dias:</strong> mostra as contas dos 3 dias seguintes para o financeiro se planejar.</li>
+                    <li><strong>Botão de Acesso Direto:</strong> aperte o botão <code>Calendário (Senha Jle@2026)</code> para acessar a aplicação.</li>
+                  </ul>
+                  <div className="guide-img-container">
+                    <img src="/NOTIFICAÇÃO GRUPO.jpg" alt="Notificação do Telegram" className="guide-img" />
+                  </div>
+                </section>
+
+                {/* Seção 2: Acesso com Senha */}
+                <section className="guide-section">
+                  <h3>2. 🔐 Acesso e Segurança (Tela de Login)</h3>
+                  <p>
+                    Ao acessar a aplicação pelo computador ou celular, você verá a tela de bloqueio oficial da JLE Telecom.
+                  </p>
+                  <ul>
+                    <li><strong>Senha Padrão:</strong> Digite <code>Jle@2026</code> e clique em <strong>Acessar Painel</strong>.</li>
+                    <li>Sua sessão ficará salva no dispositivo para facilitar acessos futuros.</li>
+                  </ul>
+                  <div className="guide-img-container">
+                    <img src="/TELA DE LOGIN.png" alt="Tela de Login" className="guide-img" />
+                  </div>
+                </section>
+
+                {/* Seção 3: Tela Principal - Calendário */}
+                <section className="guide-section">
+                  <h3>3. 📅 Visualização no Calendário (Desktop e Celular)</h3>
+                  <p>
+                    O painel exibe um calendário mensal com todas as contas fixas distribuídas nos seus respectivos dias de vencimento.
+                  </p>
+                  <ul>
+                    <li><strong>Dia Atual (Hoje):</strong> destacado com o número em um círculo laranja.</li>
+                    <li><strong>Clique no Dia:</strong> clique sobre qualquer card de dia para abrir o pop-up com todas as contas agendadas.</li>
+                    <li><strong>Modo Celular (Mobile):</strong> adaptado para navegação rápida na palma da mão.</li>
+                  </ul>
+                  <div className="guide-img-grid">
+                    <div>
+                      <p className="guide-img-label">Visualização no Computador (Desktop):</p>
+                      <img src="/TELA PRINCIPAL - CALENDÁRIO (DESKTOP).png" alt="Calendário Desktop" className="guide-img" />
+                    </div>
+                    <div>
+                      <p className="guide-img-label">Visualização no Celular (Mobile):</p>
+                      <img src="/TELA PRINCIPAL - CALENDÁRIO (MOBILE).png" alt="Calendário Mobile" className="guide-img" />
+                    </div>
+                  </div>
+                </section>
+
+                {/* Seção 4: Adicionar Nova Conta */}
+                <section className="guide-section">
+                  <h3>4. ➕ Adicionar Nova Conta Fixa</h3>
+                  <p>Para adicionar um novo vencimento recorrente no sistema:</p>
+                  <ol>
+                    <li>Clique no botão <strong>+ Nova Conta</strong> no topo ou dentro do pop-up do dia.</li>
+                    <li>Preencha o <strong>Dia do Vencimento</strong> (entre 1 e 31) e o <strong>Nome/Descrição</strong>.</li>
+                    <li>Clique em <strong>Salvar</strong>. A nova conta será sincronizada no Supabase e aparecerá nos disparos do Telegram!</li>
+                  </ol>
+                  <div className="guide-img-container">
+                    <img src="/FORMULÁRIO NOVA CONTA.png" alt="Formulário Nova Conta" className="guide-img" />
+                  </div>
+                </section>
+
+                {/* Seção 5: Editar ou Remover Conta */}
+                <section className="guide-section">
+                  <h3>5. ✏️ Editar ou Excluir uma Conta Existente</h3>
+                  <p>Para alterar o dia ou a descrição de uma conta cadastrada:</p>
+                  <ol>
+                    <li>No pop-up do dia, clique sobre a conta que deseja alterar.</li>
+                    <li>No formulário, altere os dados e clique em <strong>Salvar</strong>.</li>
+                    <li>Para apagar a conta permanentemente, clique no botão vermelho <strong>Excluir</strong> e confirme.</li>
+                  </ol>
+                  <div className="guide-img-container">
+                    <img src="/EDITAR OU REMOVER CONTA EXISTENTE.png" alt="Editar ou Remover Conta" className="guide-img" />
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: Adicionar / Editar Conta */}
       {showAddModal && (
         <div className="modal-overlay" onClick={closeFormModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingBill ? '✏️ Editar Conta Fixa' : '➕ Nova Conta Fixa'}</h2>
-              <button className="btn-icon" onClick={closeFormModal}>
+              <button className="btn-icon" onClick={closeFormModal} aria-label="Fechar">
                 <X size={20} color="#104E70" />
               </button>
             </div>
@@ -465,185 +633,57 @@ export default function App() {
                 />
               </div>
 
-              <div className="modal-actions">
-                {editingBill ? (
+              <div className="modal-actions" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+                {editingBill && (
                   <button
                     type="button"
                     className="btn btn-delete"
-                    onClick={() => handleDeleteBill(editingBill)}
+                    onClick={() => confirmDeleteBill(editingBill)}
                   >
                     <Trash2 size={16} /> Excluir
                   </button>
-                ) : (
-                  <div></div>
                 )}
-
-                <div className="modal-actions-right">
-                  <button type="button" className="btn btn-outline" style={{ color: '#104E70' }} onClick={closeFormModal}>
-                    Cancelar
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    Salvar
-                  </button>
-                </div>
+                <button type="button" className="btn btn-outline" style={{ color: '#104E70' }} onClick={closeFormModal}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Salvar
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* MODAL DE CONFIRMAÇÃO DO SISTEMA */}
-      {confirmModal.isOpen && (
-        <div className="modal-overlay" style={{ zIndex: 200 }} onClick={() => setConfirmModal({ isOpen: false })}>
-          <div className="modal-content confirm-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', gap: '16px' }}>
-            <div className="modal-header">
-              <h2 style={{ fontSize: '1.1rem' }}>{confirmModal.title}</h2>
-              <button className="btn-icon" onClick={() => setConfirmModal({ isOpen: false })}>
-                <X size={18} color="#104E70" />
-              </button>
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
+      {billToDelete && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={() => setBillToDelete(null)}>
+          <div className="modal-content modal-confirm-delete" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-confirm-icon">
+              <AlertCircle size={48} color="#EF4444" />
             </div>
-
-            <div style={{ fontSize: '0.95rem', color: '#0E2938', lineHeight: 1.5, margin: '8px 0' }}>
-              {confirmModal.message}
-            </div>
-
-            <div className="modal-actions" style={{ justifyContent: 'flex-end', gap: 10 }}>
-              <button
-                type="button"
-                className="btn btn-outline"
-                style={{ color: '#104E70' }}
-                onClick={() => setConfirmModal({ isOpen: false })}
+            <h2>Confirmar Exclusão</h2>
+            <p>
+              Tem certeza que deseja excluir a conta <strong>"{billToDelete.descricao}"</strong> (Vencimento Dia {billToDelete.dia_vencimento})?
+            </p>
+            <p className="modal-confirm-subtext">Esta ação removerá a conta do sistema e dos avisos do Telegram.</p>
+            
+            <div className="modal-actions" style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '24px' }}>
+              <button 
+                type="button" 
+                className="btn btn-outline" 
+                style={{ color: '#104E70' }} 
+                onClick={() => setBillToDelete(null)}
               >
                 Cancelar
               </button>
-              <button
-                type="button"
-                className={`btn ${confirmModal.confirmVariant === 'danger' ? 'btn-delete' : 'btn-primary'}`}
-                onClick={() => confirmModal.onConfirm && confirmModal.onConfirm()}
+              <button 
+                type="button" 
+                className="btn btn-delete"
+                onClick={executeDeleteBill}
               >
-                {confirmModal.confirmText}
+                Sim, Excluir
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL INTERATIVO DO GUIA DE USO */}
-      {showGuideModal && (
-        <div className="modal-overlay" style={{ zIndex: 250 }} onClick={() => setShowGuideModal(false)}>
-          <div
-            className="modal-content"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: '840px',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              padding: '24px',
-              borderRadius: '20px'
-            }}
-          >
-            <div className="modal-header" style={{ alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <BookOpen size={24} color="#104E70" />
-                <h2 style={{ fontSize: '1.25rem', color: '#104E70', margin: 0 }}>
-                  Guia de Uso Oficial: Contas Fixas JLE
-                </h2>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <a
-                  href="/Guia_de_Uso_Contas_Fixas.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-outline"
-                  style={{ color: '#104E70', borderColor: '#104E70', padding: '6px 12px', fontSize: '0.825rem' }}
-                >
-                  <Download size={14} /> Baixar PDF
-                </a>
-                <button className="btn-icon" onClick={() => setShowGuideModal(false)}>
-                  <X size={20} color="#104E70" />
-                </button>
-              </div>
-            </div>
-
-            <div style={{ fontSize: '0.95rem', color: '#0E2938', lineHeight: 1.6, marginTop: 12 }}>
-              <div style={{ backgroundColor: '#EBF5FA', borderLeft: '4px solid #104E70', padding: '14px 16px', borderRadius: '8px', marginBottom: 20 }}>
-                <strong style={{ color: '#104E70', display: 'block', marginBottom: 4 }}>🤖 Automação Diária às 08:00h no Telegram</strong>
-                Todos os dias, pontualmente às <strong>08:00h da manhã</strong>, o sistema gera e envia automaticamente um relatório no grupo do Telegram <strong>Contas Fixas - Pagamentos</strong> com o botão <strong>Calendário (Senha Jle@2026)</strong>.
-              </div>
-
-              <div style={{ marginBottom: 24, textAlign: 'center' }}>
-                <img
-                  src="/NOTIFICAÇÃO GRUPO.jpg"
-                  alt="Notificação Telegram"
-                  style={{ maxWidth: '100%', maxHeight: '480px', objectFit: 'contain', borderRadius: '12px', border: '1px solid #CBD5E1', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                />
-              </div>
-
-              <h3 style={{ fontSize: '1.1rem', color: '#104E70', marginBottom: 8 }}>🔑 2. Acesso e Autenticação (Login)</h3>
-              <p style={{ marginBottom: 12 }}>
-                1. Acesse o endereço do sistema: <strong>https://contasfixasjle.vercel.app</strong><br/>
-                2. Digite a senha padrão de acesso: <code>Jle@2026</code><br/>
-                3. Clique em <strong>Acessar Painel</strong>.
-              </p>
-              <div style={{ marginBottom: 24, textAlign: 'center' }}>
-                <img
-                  src="/TELA DE LOGIN.png"
-                  alt="Tela de Login"
-                  style={{ maxWidth: '100%', borderRadius: '12px', border: '1px solid #CBD5E1' }}
-                />
-              </div>
-
-              <h3 style={{ fontSize: '1.1rem', color: '#104E70', marginBottom: 8 }}>🗓️ 3. Visão Geral do Calendário</h3>
-              <p style={{ marginBottom: 12 }}>
-                • <strong>Seletor de Mês (&lt; AGOSTO 2026 &gt;)</strong>: Alterne facilmente entre os meses.<br/>
-                • <strong>Botão "Hoje"</strong>: Retorna rapidamente para a data atual.<br/>
-                • <strong>Botão "+ Nova Conta"</strong>: Abre o formulário para lançar uma nova conta.<br/>
-                • <strong>Lista de Contas por Dia</strong>: Em dias com muitas contas, a rolagem ocorre suavemente dentro do próprio card.
-              </p>
-              <div style={{ marginBottom: 16, textAlign: 'center' }}>
-                <strong>Desktop:</strong><br/>
-                <img
-                  src="/TELA PRINCIPAL - CALENDÁRIO (DESKTOP).png"
-                  alt="Desktop"
-                  style={{ maxWidth: '100%', borderRadius: '12px', border: '1px solid #CBD5E1', marginTop: 6 }}
-                />
-              </div>
-              <div style={{ marginBottom: 24, textAlign: 'center' }}>
-                <strong>Mobile:</strong><br/>
-                <img
-                  src="/TELA PRINCIPAL - CALENDÁRIO (MOBILE).png"
-                  alt="Mobile"
-                  style={{ maxWidth: '300px', borderRadius: '12px', border: '1px solid #CBD5E1', marginTop: 6 }}
-                />
-              </div>
-
-              <h3 style={{ fontSize: '1.1rem', color: '#104E70', marginBottom: 8 }}>➕ 4. Lançar uma Nova Conta Fixa</h3>
-              <p style={{ marginBottom: 12 }}>
-                1. Clique no botão <strong>+ Nova Conta</strong> no topo.<br/>
-                2. Preencha o <strong>Dia do Vencimento (1 a 31)</strong> e a <strong>Descrição</strong>.<br/>
-                3. Clique em <strong>Salvar</strong> e confirme na mensagem do sistema.
-              </p>
-              <div style={{ marginBottom: 24, textAlign: 'center' }}>
-                <img
-                  src="/FORMULÁRIO NOVA CONTA.png"
-                  alt="Nova Conta"
-                  style={{ maxWidth: '100%', borderRadius: '12px', border: '1px solid #CBD5E1' }}
-                />
-              </div>
-
-              <h3 style={{ fontSize: '1.1rem', color: '#104E70', marginBottom: 8 }}>✏️ 5. Editar ou Excluir uma Conta Existente</h3>
-              <p style={{ marginBottom: 12 }}>
-                1. Clique diretamente sobre a conta no calendário.<br/>
-                2. <strong>Para Alterar:</strong> Modifique o dia ou descrição ➔ clique em <strong>Salvar</strong>.<br/>
-                3. <strong>Para Remover:</strong> Clique no botão vermelho <strong>Excluir</strong> ➔ confirme no alerta de segurança do sistema.
-              </p>
-              <div style={{ marginBottom: 12, textAlign: 'center' }}>
-                <img
-                  src="/EDITAR OU REMOVER CONTA EXISTENTE.png"
-                  alt="Editar ou Remover"
-                  style={{ maxWidth: '100%', borderRadius: '12px', border: '1px solid #CBD5E1' }}
-                />
-              </div>
             </div>
           </div>
         </div>
