@@ -482,28 +482,25 @@ export default function App() {
       {showGuideModal && (
         <div className="modal-overlay" onClick={() => setShowGuideModal(false)}>
           <div className="modal-content modal-guide" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>📖 Guia de Uso - Sistema Contas Fixas JLE Telecom</h2>
-              <button className="btn-icon" onClick={() => setShowGuideModal(false)} aria-label="Fechar Guia">
+            <div className="modal-header" style={{ justifyContent: 'center', position: 'relative' }}>
+              <h2 style={{ textAlign: 'center', width: '100%', paddingRight: '20px' }}>📖 Guia de Uso - Sistema Contas Fixas JLE Telecom</h2>
+              <button className="btn-icon" style={{ position: 'absolute', right: '0' }} onClick={() => setShowGuideModal(false)} aria-label="Fechar Guia">
                 <X size={20} color="#104E70" />
               </button>
             </div>
 
             <div className="guide-body">
-              {/* Botão de Download PDF */}
-              <div className="guide-download-banner">
-                <div>
-                  <h3>Manual Completo em PDF</h3>
-                  <p>Baixe o arquivo PDF oficial com fotos explicativas em alta resolução.</p>
-                </div>
+              {/* Botão de Download PDF Limpo */}
+              <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                 <a 
                   href="/Guia_de_Uso_Contas_Fixas.pdf" 
                   download="Guia_de_Uso_Contas_Fixas.pdf" 
-                  className="btn btn-primary btn-download"
+                  className="btn btn-primary"
                   target="_blank"
                   rel="noopener noreferrer"
+                  style={{ padding: '12px 28px', fontSize: '0.95rem', fontWeight: '700' }}
                 >
-                  <Download size={18} /> Baixar PDF Oficial
+                  <Download size={18} /> Baixar PDF
                 </a>
               </div>
 
