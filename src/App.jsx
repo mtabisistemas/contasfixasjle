@@ -328,6 +328,10 @@ export default function App() {
         </div>
 
         <div className="header-controls">
+          <button className="btn btn-primary btn-add-header" onClick={openAddModal} title="Nova Conta" aria-label="Nova Conta">
+            <Plus size={18} /> <span className="btn-add-text">Nova Conta</span>
+          </button>
+
           <div className="month-nav">
             <button className="btn-icon" onClick={prevMonth} aria-label="Mês anterior">
               <ChevronLeft size={20} />
@@ -339,10 +343,6 @@ export default function App() {
               <ChevronRight size={20} />
             </button>
           </div>
-
-          <button className="btn btn-primary" onClick={openAddModal}>
-            <Plus size={18} /> Nova Conta
-          </button>
 
           <button 
             className="btn btn-icon btn-guide" 
