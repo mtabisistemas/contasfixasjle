@@ -179,8 +179,6 @@ def create_guide_pdf(output_paths):
         print(f"PDF criado com sucesso em: {path}")
 
 if __name__ == "__main__":
-    out1 = r"c:\Users\Operador\.gemini\antigravity\scratch\CBM-Sapucaia-do-Sul-main\public\Guia_de_Uso_Contas_Fixas.pdf"
-    out2 = r"C:\Users\Operador\.gemini\antigravity\brain\ee08e766-40f9-47a1-9687-fca91c7cfe00\Guia_de_Uso_Contas_Fixas.pdf"
-    out3 = r"C:\Users\Operador\Downloads\Guia_de_Uso_Contas_Fixas.pdf"
+    out1 = os.path.join(os.path.dirname(__file__), "public", "Guia_de_Uso_Contas_Fixas.pdf")
     os.makedirs(os.path.dirname(out1), exist_ok=True)
-    create_guide_pdf([out1, out2, out3])
+    create_guide_pdf([out1])

@@ -540,16 +540,16 @@ export default function App() {
                   </div>
                 </section>
 
-                {/* Seção 3: Tela Principal - Calendário */}
+                {/* Seção 3: Tela Principal - Calendário & Pop-up do Dia */}
                 <section className="guide-section">
-                  <h3>3. 📅 Visualização no Calendário (Desktop e Celular)</h3>
+                  <h3>3. 📅 Visualização no Calendário & Pop-up Central do Dia</h3>
                   <p>
                     O painel exibe um calendário mensal com todas as contas fixas distribuídas nos seus respectivos dias de vencimento.
                   </p>
                   <ul>
                     <li><strong>Dia Atual (Hoje):</strong> destacado com o número em um círculo laranja.</li>
-                    <li><strong>Clique no Dia:</strong> clique sobre qualquer card de dia para abrir o pop-up com todas as contas agendadas.</li>
-                    <li><strong>Modo Celular (Mobile):</strong> adaptado para navegação rápida na palma da mão.</li>
+                    <li><strong>Novo Pop-up do Dia:</strong> clique sobre qualquer card de dia para abrir um pop-up central exclusivo com a lista completa de contas daquele dia.</li>
+                    <li><strong>Interação Direta:</strong> no pop-up do dia, clique sobre qualquer conta para abrir o formulário de edição/exclusão ou aperte <code>+ Adicionar Conta neste dia</code>.</li>
                   </ul>
                   <div className="guide-img-grid">
                     <div>
