@@ -9,13 +9,18 @@ from reportlab.platypus import (
 
 def get_image_flowable(path, max_w=450, max_h=280):
     if not os.path.exists(path):
+        print(f"Imagem não encontrada: {path}")
         return None
-    with PILImage.open(path) as img:
-        w, h = img.size
-        scale = min(max_w / float(w), max_h / float(h))
-        new_w = w * scale
-        new_h = h * scale
-        return RLImage(path, width=new_w, height=new_h)
+    try:
+        with PILImage.open(path) as img:
+            w, h = img.size
+            scale = min(max_w / float(w), max_h / float(h))
+            new_w = w * scale
+            new_h = h * scale
+            return RLImage(path, width=new_w, height=new_h)
+    except Exception as e:
+        print(f"Erro ao carregar imagem {path}: {e}")
+        return None
 
 def create_guide_pdf(output_paths):
     styles = getSampleStyleSheet()
@@ -60,7 +65,7 @@ def create_guide_pdf(output_paths):
         textColor=colors.HexColor('#0B334B'),
     )
 
-    base_img_dir = r"C:\Users\Operador\.gemini\antigravity\brain\ee08e766-40f9-47a1-9687-fca91c7cfe00"
+    base_img_dir = os.path.join(os.path.dirname(__file__), "public")
 
     story = []
 
@@ -89,7 +94,7 @@ def create_guide_pdf(output_paths):
     ]))
     s1_elements.append(t_alert)
     s1_elements.append(Spacer(1, 6))
-    img1 = get_image_flowable(os.path.join(base_img_dir, "NOTIFICAÇÃO GRUPO.jpg"), max_w=460, max_h=400)
+    img1 = get_image_flowable(os.path.join(base_img_dir, "NOTIFICAÇÃO GRUPO.jpg"), max_w=460, max_h=300)
     if img1:
         s1_elements.append(img1)
     story.append(KeepTogether(s1_elements))
@@ -110,11 +115,10 @@ def create_guide_pdf(output_paths):
 
     # Section 3: Visão Geral (Desktop + Mobile)
     s3_elements = []
-    s3_elements.append(Paragraph("3. Visao Geral do Calendario (Desktop e Mobile)", h2_style))
+    s3_elements.append(Paragraph("3. Visao Geral do Calendario e Pop-up do Dia", h2_style))
     s3_elements.append(Paragraph("• <b>Seletor de Mes (&lt; AGOSTO 2026 &gt;)</b>: Alterne facilmente entre os meses.", body_style))
-    s3_elements.append(Paragraph("• <b>Botao 'Hoje'</b>: Retorna rapidamente para a data atual.", body_style))
     s3_elements.append(Paragraph("• <b>Botao '+ Nova Conta'</b>: Abre o formulario para lancar uma nova conta.", body_style))
-    s3_elements.append(Paragraph("• <b>Lista de Contas por Dia</b>: Quando um dia possui muitas contas (ex: dia 10), a rolagem ocorre suavemente dentro do proprio card do dia.", body_style))
+    s3_elements.append(Paragraph("• <b>Pop-up Central do Dia</b>: Clique sobre qualquer card de dia para abrir um pop-up com a listagem completa das contas daquele dia.", body_style))
     s3_elements.append(Spacer(1, 6))
     story.append(KeepTogether(s3_elements))
 
@@ -139,12 +143,11 @@ def create_guide_pdf(output_paths):
     # Section 4: Lançar Nova Conta
     s4_elements = []
     s4_elements.append(Paragraph("4. Passo a Passo: Lancar uma Nova Conta Fixa", h2_style))
-    s4_elements.append(Paragraph("1. No canto superior direito do cabecalho, clique no botao <b>+ Nova Conta</b>.", body_style))
+    s4_elements.append(Paragraph("1. No canto superior direito do cabecalho (ou dentro do pop-up do dia), clique no botao <b>+ Nova Conta</b>.", body_style))
     s4_elements.append(Paragraph("2. Preencha os dois campos do formulario:", body_style))
     s4_elements.append(Paragraph("   - <b>Dia do Vencimento (1 a 31)</b>: Digite o dia do mes (ex: 3).", body_style))
     s4_elements.append(Paragraph("   - <b>Descricao / Nome da Conta</b>: Digite o nome da despesa (ex: Aluguel Base NH).", body_style))
     s4_elements.append(Paragraph("3. Clique em <b>Salvar</b>.", body_style))
-    s4_elements.append(Paragraph("4. O sistema exibira o modal de confirmacao: Clique em <b>Cadastrar</b> para confirmar a inclusao.", body_style))
     s4_elements.append(Spacer(1, 6))
     img4 = get_image_flowable(os.path.join(base_img_dir, "FORMULÁRIO NOVA CONTA.png"), max_w=460, max_h=240)
     if img4:
@@ -155,10 +158,10 @@ def create_guide_pdf(output_paths):
     # Section 5: Editar / Excluir
     s5_elements = []
     s5_elements.append(Paragraph("5. Passo a Passo: Editar ou Excluir uma Conta Existente", h2_style))
-    s5_elements.append(Paragraph("1. Clique diretamente sobre a conta que deseja alterar no calendario (ex: Aluguel Base NH).", body_style))
+    s5_elements.append(Paragraph("1. No pop-up do dia, clique diretamente sobre a conta que deseja alterar (ex: Aluguel Base NH).", body_style))
     s5_elements.append(Paragraph("2. O formulario de edicao sera aberto com os campos preenchidos.", body_style))
     s5_elements.append(Spacer(1, 4))
-    s5_elements.append(Paragraph("<b>Para Alterar:</b> Modifique o dia ou a descricao ➔ Clique em <b>Salvar</b> ➔ Confirme na caixa do sistema.", body_style))
+    s5_elements.append(Paragraph("<b>Para Alterar:</b> Modifique o dia ou a descricao ➔ Clique em <b>Salvar</b>.", body_style))
     s5_elements.append(Paragraph("<b>Para Remover:</b> Clique no botao vermelho <b>Excluir</b> ➔ Confirme na caixa de seguranca (<b>Sim, Excluir</b>).", body_style))
     s5_elements.append(Spacer(1, 6))
     img5 = get_image_flowable(os.path.join(base_img_dir, "EDITAR OU REMOVER CONTA EXISTENTE.png"), max_w=460, max_h=240)
