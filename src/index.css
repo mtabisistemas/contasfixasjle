@@ -759,19 +759,23 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
   background-color: #FFF7ED;
-  transition: background-color 0.2s;
+  border: 1px solid #FED7AA;
+  color: var(--jle-orange);
+  transition: all 0.2s ease;
+}
+
+.day-bill-card-action svg {
+  stroke: currentColor;
 }
 
 .day-bill-card-item:hover .day-bill-card-action {
-  background-color: var(--jle-orange);
-}
-
-.day-bill-card-item:hover .day-bill-card-action svg {
-  color: #FFFFFF !important;
+  background-color: var(--jle-blue-dark);
+  border-color: var(--jle-blue-dark);
+  color: #FFFFFF;
 }
 
 .day-popup-footer {

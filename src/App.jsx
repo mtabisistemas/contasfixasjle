@@ -457,7 +457,7 @@ export default function App() {
                         <span className="day-bill-name">{bill.descricao}</span>
                       </div>
                       <div className="day-bill-card-action">
-                        <Edit2 size={16} color="#F3921F" />
+                        <Edit2 size={16} />
                       </div>
                     </div>
                   ))}
