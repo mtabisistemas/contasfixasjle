@@ -346,9 +346,6 @@ export default function App() {
         </div>
 
         <div className="header-controls">
-          <button className="btn btn-outline btn-today" onClick={goToToday}>
-            Hoje
-          </button>
 
           <div className="month-nav">
             <button className="btn-icon" onClick={prevMonth} aria-label="Mês anterior">
