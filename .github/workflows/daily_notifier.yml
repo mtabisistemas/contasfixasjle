@@ -2,9 +2,9 @@ name: Notificador Diário Telegram (Contas Fixas JLE)
 
 on:
   schedule:
-    # Executa exclusivamente 1 vez ao dia às 11:00 UTC (08:00 no horário de Brasília)
-    - cron: '0 11 * * *'
-  workflow_dispatch: # Permite disparar manualmente pelo botão no GitHub com 1 clique
+    # Executa de Segunda a Sexta-feira às 11:00 UTC (08:00 no horário de Brasília)
+    - cron: '0 11 * * 1-5'
+  workflow_dispatch:
 
 jobs:
   notify:
