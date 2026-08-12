@@ -561,7 +561,7 @@ export default function App() {
                     <li><strong>Botão de Acesso Direto:</strong> aperte o botão <code>Calendário (Senha Jle@2026)</code> para acessar a aplicação.</li>
                   </ul>
                   <div className="guide-img-container">
-                    <img src="/NOTIFICAÇÃO GRUPO.jpg" alt="Notificação do Telegram" className="guide-img" />
+                    <img src="/NOTIFICAÇÃO GRUPO.jpg" alt="Notificação do Telegram" className="guide-img" loading="lazy" decoding="async" />
                   </div>
                 </section>
 
@@ -576,7 +576,7 @@ export default function App() {
                     <li>Sua sessão ficará salva no dispositivo para facilitar acessos futuros.</li>
                   </ul>
                   <div className="guide-img-container">
-                    <img src="/TELA DE LOGIN.png" alt="Tela de Login" className="guide-img" />
+                    <img src="/TELA DE LOGIN.png" alt="Tela de Login" className="guide-img" loading="lazy" decoding="async" />
                   </div>
                 </section>
 
@@ -594,11 +594,11 @@ export default function App() {
                   <div className="guide-img-grid">
                     <div>
                       <p className="guide-img-label">Visualização no Computador (Desktop):</p>
-                      <img src="/TELA PRINCIPAL - CALENDÁRIO (DESKTOP).png" alt="Calendário Desktop" className="guide-img" />
+                      <img src="/TELA PRINCIPAL - CALENDÁRIO (DESKTOP).png" alt="Calendário Desktop" className="guide-img" loading="lazy" decoding="async" />
                     </div>
                     <div>
                       <p className="guide-img-label">Visualização no Celular (Mobile):</p>
-                      <img src="/TELA PRINCIPAL - CALENDÁRIO (MOBILE).png" alt="Calendário Mobile" className="guide-img" />
+                      <img src="/TELA PRINCIPAL - CALENDÁRIO (MOBILE).png" alt="Calendário Mobile" className="guide-img" loading="lazy" decoding="async" />
                     </div>
                   </div>
                 </section>
@@ -613,7 +613,7 @@ export default function App() {
                     <li>Clique em <strong>Salvar</strong>. A nova conta será sincronizada no Supabase e aparecerá nos disparos do Telegram!</li>
                   </ol>
                   <div className="guide-img-container">
-                    <img src="/FORMULÁRIO NOVA CONTA.png" alt="Formulário Nova Conta" className="guide-img" />
+                    <img src="/FORMULÁRIO NOVA CONTA.png" alt="Formulário Nova Conta" className="guide-img" loading="lazy" decoding="async" />
                   </div>
                 </section>
 
@@ -627,7 +627,7 @@ export default function App() {
                     <li>Para apagar a conta permanentemente, clique no botão vermelho <strong>Excluir</strong> e confirme.</li>
                   </ol>
                   <div className="guide-img-container">
-                    <img src="/EDITAR OU REMOVER CONTA EXISTENTE.png" alt="Editar ou Remover Conta" className="guide-img" />
+                    <img src="/EDITAR OU REMOVER CONTA EXISTENTE.png" alt="Editar ou Remover Conta" className="guide-img" loading="lazy" decoding="async" />
                   </div>
                 </section>
               </div>
