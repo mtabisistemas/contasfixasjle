@@ -69,12 +69,21 @@ def fetch_contas():
         print("Aviso Supabase (usando contas padrão):", e)
         return get_mock_contas()
 
+def is_conta_valida_para_mes(c, mes: int, ano: int) -> bool:
+    if c.get("recorrente") is False:
+        mes_ano = c.get("mes_ano")
+        if mes_ano:
+            target = f"{ano}-{mes:02d}"
+            return mes_ano == target
+    return True
+
 def gerar_imagem_calendario(contas, mes: int, ano: int) -> str:
     """Gera o calendário visual estilizado com as cores e logo oficial da JLE Telecom."""
     contas_por_dia = {}
     for c in contas:
-        dia = c["dia_vencimento"]
-        contas_por_dia.setdefault(dia, []).append(c)
+        if is_conta_valida_para_mes(c, mes, ano):
+            dia = c["dia_vencimento"]
+            contas_por_dia.setdefault(dia, []).append(c)
 
     WIDTH = 1200
     HEIGHT = 920
@@ -241,7 +250,7 @@ def main():
     contas = fetch_contas()
     photo_path = gerar_imagem_calendario(contas, agora.month, agora.year)
 
-    contas_hoje = [c for c in contas if c["dia_vencimento"] == agora.day]
+    contas_hoje = [c for c in contas if c["dia_vencimento"] == agora.day and is_conta_valida_para_mes(c, agora.month, agora.year)]
 
     # Busca Vencimentos nos Próximos 3 Dias
     dias_semana_pt = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
@@ -251,7 +260,7 @@ def main():
         data_futura = agora + datetime.timedelta(days=i)
         dia_f = data_futura.day
         nome_dia_semana = dias_semana_pt[data_futura.weekday()]
-        contas_f = [c for c in contas if c["dia_vencimento"] == dia_f]
+        contas_f = [c for c in contas if c["dia_vencimento"] == dia_f and is_conta_valida_para_mes(c, data_futura.month, data_futura.year)]
         if contas_f:
             proximos_dias.append((dia_f, nome_dia_semana, contas_f))
 

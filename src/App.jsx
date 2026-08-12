@@ -47,6 +47,7 @@ export default function App() {
   // Form de Nova/Edição de Conta
   const [formDia, setFormDia] = useState(1);
   const [formDescricao, setFormDescricao] = useState('');
+  const [formRecorrente, setFormRecorrente] = useState(true);
 
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
@@ -55,6 +56,15 @@ export default function App() {
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
+
+  // Helper de Validação de Recorrência por Mês Selecionado
+  const isBillValidForMonth = (bill, month, year) => {
+    if (bill.recorrente === false) {
+      const targetMesAno = `${year}-${String(month).padStart(2, '0')}`;
+      return bill.mes_ano === targetMesAno;
+    }
+    return true;
+  };
 
   // Handler de Login
   const handleLogin = (e) => {
@@ -128,19 +138,36 @@ export default function App() {
 
     const diaNum = Number(formDia);
     const descStr = formDescricao.trim();
+    const currentMesAnoStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+
+    const payload = {
+      dia_vencimento: diaNum,
+      descricao: descStr,
+      recorrente: formRecorrente,
+      mes_ano: formRecorrente ? null : (editingBill?.mes_ano || currentMesAnoStr),
+      ativa: true
+    };
 
     try {
       if (editingBill) {
         if (isSupabaseConfigured && supabase) {
           await supabase
             .from('contas')
-            .update({ dia_vencimento: diaNum, descricao: descStr })
+            .update(payload)
             .eq('id', editingBill.id);
+        } else {
+          const updated = contas.map(c => c.id === editingBill.id ? { ...c, ...payload } : c);
+          setContas(updated);
+          localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
         }
       } else {
-        const newBill = { dia_vencimento: diaNum, descricao: descStr, ativa: true };
         if (isSupabaseConfigured && supabase) {
-          await supabase.from('contas').insert([newBill]);
+          await supabase.from('contas').insert([payload]);
+        } else {
+          const newObj = { id: Date.now(), ...payload };
+          const updated = [...contas, newObj];
+          setContas(updated);
+          localStorage.setItem('contas_fixas_data', JSON.stringify(updated));
         }
       }
     } catch (err) {
@@ -175,6 +202,7 @@ export default function App() {
     setEditingBill(null);
     setFormDia(day);
     setFormDescricao('');
+    setFormRecorrente(true);
     setShowAddModal(true);
   };
 
@@ -186,6 +214,7 @@ export default function App() {
     setEditingBill(bill);
     setFormDia(bill.dia_vencimento);
     setFormDescricao(bill.descricao);
+    setFormRecorrente(bill.recorrente !== false);
     setShowAddModal(true);
   };
 
@@ -194,6 +223,7 @@ export default function App() {
     setEditingBill(null);
     setFormDescricao('');
     setFormDia(1);
+    setFormRecorrente(true);
   };
 
   const prevMonth = () => setCurrentDate(new Date(currentYear, currentDate.getMonth() - 1, 1));
@@ -310,9 +340,9 @@ export default function App() {
     );
   }
 
-  // Contas do Dia Selecionado para o Pop-up
+  // Contas do Dia Selecionado para o Pop-up (Filtradas por mês/ano se for não-recorrente)
   const selectedDayBills = selectedDay
-    ? contas.filter((c) => c.dia_vencimento === selectedDay)
+    ? contas.filter((c) => c.dia_vencimento === selectedDay && isBillValidForMonth(c, currentMonth, currentYear))
     : [];
 
   // ---------------- TELA PRINCIPAL DO CALENDÁRIO COM LOGO JLE BRANCO ----------------
@@ -376,7 +406,7 @@ export default function App() {
           {Array.from({ length: daysInMonth }).map((_, index) => {
             const dayNum = index + 1;
             const isToday = isCurrentMonthActual && today.getDate() === dayNum;
-            const dayBills = contas.filter((c) => c.dia_vencimento === dayNum);
+            const dayBills = contas.filter((c) => c.dia_vencimento === dayNum && isBillValidForMonth(c, currentMonth, currentYear));
             const hasBills = dayBills.length > 0;
 
             return (
@@ -402,8 +432,14 @@ export default function App() {
                       <div
                         key={bill.id}
                         className="bill-pill pending"
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                       >
                         <span className="bill-title">{bill.descricao}</span>
+                        {bill.recorrente === false && (
+                          <span style={{ fontSize: '9px', backgroundColor: '#F3921F', color: '#FFF', padding: '1px 4px', borderRadius: '4px', fontWeight: 'bold', marginLeft: '4px', flexShrink: 0 }}>
+                            📌 Avulsa
+                          </span>
+                        )}
                       </div>
                     ))}
                     {dayBills.length > 3 && (
@@ -429,7 +465,7 @@ export default function App() {
                 <p className="day-popup-subtitle">
                   {selectedDayBills.length === 0
                     ? 'Nenhuma conta agendada para este dia'
-                    : `${selectedDayBills.length} conta(s) fixa(s) com vencimento neste dia`}
+                    : `${selectedDayBills.length} conta(s) com vencimento neste dia`}
                 </p>
               </div>
               <button className="btn-icon" onClick={() => setSelectedDay(null)} aria-label="Fechar">
@@ -453,7 +489,14 @@ export default function App() {
                       title="Clique sobre a conta para abrir o formulário de edição/exclusão"
                     >
                       <div className="day-bill-card-info">
-                        <span className="day-bill-tag">Dia {bill.dia_vencimento}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className="day-bill-tag">Dia {bill.dia_vencimento}</span>
+                          {bill.recorrente === false && (
+                            <span style={{ fontSize: '11px', backgroundColor: '#F3921F', color: '#FFFFFF', padding: '2px 8px', borderRadius: '12px', fontWeight: '700' }}>
+                              📌 Não Recorrente ({mesesPt[currentMonth - 1]}/{currentYear})
+                            </span>
+                          )}
+                        </div>
                         <span className="day-bill-name">{bill.descricao}</span>
                       </div>
                       <div className="day-bill-card-action">
@@ -628,6 +671,61 @@ export default function App() {
                   onChange={(e) => setFormDescricao(e.target.value)}
                   required
                 />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', marginBottom: 8, fontWeight: '600', color: '#104E70' }}>
+                  Recorrência da Conta:
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setFormRecorrente(true)}
+                    style={{
+                      padding: '12px 10px',
+                      borderRadius: '10px',
+                      border: formRecorrente ? '2px solid #F3921F' : '1px solid #CBD5E1',
+                      backgroundColor: formRecorrente ? 'rgba(243, 146, 31, 0.1)' : '#F8FAFC',
+                      color: formRecorrente ? '#104E70' : '#64748B',
+                      fontWeight: '700',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    🔁 Recorrente (Mensal)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormRecorrente(false)}
+                    style={{
+                      padding: '12px 10px',
+                      borderRadius: '10px',
+                      border: !formRecorrente ? '2px solid #F3921F' : '1px solid #CBD5E1',
+                      backgroundColor: !formRecorrente ? 'rgba(243, 146, 31, 0.1)' : '#F8FAFC',
+                      color: !formRecorrente ? '#104E70' : '#64748B',
+                      fontWeight: '700',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    📌 Não Recorrente (Avulsa)
+                  </button>
+                </div>
+                <p style={{ marginTop: '8px', fontSize: '0.8rem', color: '#64748B', lineHeight: '1.3' }}>
+                  {formRecorrente
+                    ? '• Repete automaticamente todos os meses neste dia de vencimento.'
+                    : `• Vence APENAS em ${mesesPt[currentMonth - 1]} de ${currentYear} e NÃO se repetirá nos meses seguintes.`}
+                </p>
               </div>
 
               <div className="modal-actions" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
