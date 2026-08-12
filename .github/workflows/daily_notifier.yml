@@ -1,6 +1,9 @@
 name: Notificador Diário Telegram (Contas Fixas JLE)
 
 on:
+  schedule:
+    # Executa de segunda a sexta às 11:00 UTC (08:00 no horário de Brasília) - UM ÚNICO DISPARO
+    - cron: '0 11 * * 1-5'
   workflow_dispatch: # Permite disparar manualmente se necessário
 
 jobs:
