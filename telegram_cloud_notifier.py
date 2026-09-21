@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import urllib.request
+import urllib.error
 import datetime
 import calendar
 from PIL import Image, ImageDraw, ImageFont
@@ -78,17 +79,17 @@ def is_conta_valida_para_mes(c, mes: int, ano: int) -> bool:
     return True
 
 def gerar_imagem_calendario(contas, mes: int, ano: int) -> str:
-    """Gera o calendário visual estilizado com as cores e logo oficial da JLE Telecom."""
+    """Gera visualmente a mesma grade de calendário para o mês corrente."""
     contas_por_dia = {}
     for c in contas:
         if is_conta_valida_para_mes(c, mes, ano):
-            dia = c["dia_vencimento"]
-            contas_por_dia.setdefault(dia, []).append(c)
+            d = c["dia_vencimento"]
+            contas_por_dia.setdefault(d, []).append(c)
 
     WIDTH = 1200
-    HEIGHT = 920
-    HEADER_HEIGHT = 110
-    DAYS_HEADER_HEIGHT = 42
+    HEIGHT = 800
+    HEADER_HEIGHT = 100
+    DAYS_HEADER_HEIGHT = 38
     MARGIN = 20
 
     JLE_NAVY = (16, 78, 112)       # #104E70
@@ -111,8 +112,8 @@ def gerar_imagem_calendario(contas, mes: int, ano: int) -> str:
     draw.rectangle([0, 0, WIDTH, HEADER_HEIGHT], fill=JLE_NAVY_DARK)
     draw.rectangle([0, HEADER_HEIGHT - 4, WIDTH, HEADER_HEIGHT], fill=JLE_ORANGE)
 
-    # Logo Oficial JLE Telecom (Branco e Laranja transparente)
-    logo_path = r"C:\Users\jlema\.gemini\antigravity\scratch\contas_fixas_app\public\jle_logo.png"
+    # Logo Oficial JLE Telecom se disponível
+    logo_path = os.path.join(os.path.dirname(__file__), "public", "jle_logo.png")
     text_x_offset = MARGIN
     if os.path.exists(logo_path):
         try:
@@ -189,6 +190,27 @@ def gerar_imagem_calendario(contas, mes: int, ano: int) -> str:
     img.save(file_path, "PNG")
     return file_path
 
+def send_telegram_message(text: str):
+    """Envia mensagem de texto via Telegram API (limite de 4096 caracteres)."""
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": text,
+        "parse_mode": "Markdown"
+    }
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"}
+    )
+    try:
+        with urllib.request.urlopen(req) as resp:
+            print("Mensagem de texto enviada com sucesso para o Telegram!")
+    except urllib.error.HTTPError as e:
+        err_msg = e.read().decode("utf-8")
+        print(f"Erro ao enviar sendMessage: HTTP {e.code} - {err_msg}")
+        raise
+
 def send_telegram_photo(photo_path: str, caption: str):
     """Envia a foto com o botão inline 'Calendário (Senha Jle@2026)'."""
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
@@ -208,29 +230,19 @@ def send_telegram_photo(photo_path: str, caption: str):
     body = []
     
     body.append(f"--{boundary}".encode())
-    body.append(f'Content-Disposition: form-data; name="chat_id"'.encode())
-    body.append("".encode())
-    body.append(str(TELEGRAM_CHAT_ID).encode())
+    body.append(b'Content-Disposition: form-data; name="chat_id"\r\n\r\n' + str(TELEGRAM_CHAT_ID).encode())
 
     body.append(f"--{boundary}".encode())
-    body.append(f'Content-Disposition: form-data; name="parse_mode"'.encode())
-    body.append("".encode())
-    body.append("Markdown".encode())
+    body.append(b'Content-Disposition: form-data; name="parse_mode"\r\n\r\nMarkdown')
 
     body.append(f"--{boundary}".encode())
-    body.append(f'Content-Disposition: form-data; name="caption"'.encode())
-    body.append("".encode())
-    body.append(caption.encode("utf-8"))
+    body.append(b'Content-Disposition: form-data; name="caption"\r\n\r\n' + caption.encode("utf-8"))
 
     body.append(f"--{boundary}".encode())
-    body.append(f'Content-Disposition: form-data; name="reply_markup"'.encode())
-    body.append("".encode())
-    body.append(json.dumps(reply_markup).encode("utf-8"))
+    body.append(b'Content-Disposition: form-data; name="reply_markup"\r\n\r\n' + json.dumps(reply_markup).encode("utf-8"))
 
     body.append(f"--{boundary}".encode())
-    body.append(f'Content-Disposition: form-data; name="photo"; filename="calendario_jle.png"'.encode())
-    body.append('Content-Type: image/png'.encode())
-    body.append("".encode())
+    body.append(b'Content-Disposition: form-data; name="photo"; filename="calendario_jle.png"\r\nContent-Type: image/png\r\n')
 
     with open(photo_path, "rb") as f:
         file_bytes = f.read()
@@ -242,8 +254,13 @@ def send_telegram_photo(photo_path: str, caption: str):
         data=full_body,
         headers={"Content-Type": f"multipart/form-data; boundary={boundary}"}
     )
-    with urllib.request.urlopen(req) as resp:
-        print("Notificação JLE enviada com sucesso para o Telegram com o novo botão!")
+    try:
+        with urllib.request.urlopen(req) as resp:
+            print("Notificação JLE enviada com sucesso para o Telegram com o novo botão!")
+    except urllib.error.HTTPError as e:
+        err_msg = e.read().decode("utf-8")
+        print(f"Erro ao enviar sendPhoto: HTTP {e.code} - {err_msg}")
+        raise
 
 def main():
     agora = datetime.datetime.now()
@@ -264,28 +281,36 @@ def main():
         if contas_f:
             proximos_dias.append((dia_f, nome_dia_semana, contas_f))
 
-    mensagem = [f"📶 *JLE TELECOM - LEMBRETE DE CONTAS FIXAS*\n📅 *Data:* {agora.strftime('%d/%m/%Y')}\n"]
-
-    # 1. Seção VENCEM HOJE
+    # 1. Seção Cabeçalho e VENCEM HOJE
+    msg_hoje = [f"📶 *JLE TELECOM - LEMBRETE DE CONTAS FIXAS*\n📅 *Data:* {agora.strftime('%d/%m/%Y')}\n"]
     if contas_hoje:
-        mensagem.append(f"🚨 *VENCEM HOJE (Dia {agora.day:02d}):*")
+        msg_hoje.append(f"🚨 *VENCEM HOJE (Dia {agora.day:02d}):*")
         for c in contas_hoje:
-            mensagem.append(f"• *{c['descricao']}*")
-        mensagem.append("")
+            msg_hoje.append(f"• *{c['descricao']}*")
+        msg_hoje.append("")
     else:
-        mensagem.append("✨ *Nenhuma conta vence no dia de HOJE.*\n")
+        msg_hoje.append("✨ *Nenhuma conta vence no dia de HOJE.*\n")
 
     # 2. Seção VENCIMENTOS NOS PRÓXIMOS 3 DIAS
-    mensagem.append("🗓️ *VENCIMENTOS NOS PRÓXIMOS 3 DIAS:*")
+    msg_proximos = ["🗓️ *VENCIMENTOS NOS PRÓXIMOS 3 DIAS:*"]
     if proximos_dias:
         for dia_f, dia_semana, lista in proximos_dias:
             for c in lista:
-                mensagem.append(f"• *Dia {dia_f:02d} ({dia_semana})*: {c['descricao']}")
+                msg_proximos.append(f"• *Dia {dia_f:02d} ({dia_semana})*: {c['descricao']}")
     else:
-        mensagem.append("✨ Nenhuma conta agendada para os próximos 3 dias.")
+        msg_proximos.append("✨ Nenhuma conta agendada para os próximos 3 dias.")
 
-    caption = "\n".join(mensagem)
-    send_telegram_photo(photo_path, caption)
+    texto_completo = "\n".join(msg_hoje) + "\n" + "\n".join(msg_proximos)
+
+    # Limite rígido da API do Telegram para legendas de mídia (sendPhoto) é de 1024 caracteres
+    if len(texto_completo) <= 1024:
+        send_telegram_photo(photo_path, texto_completo)
+    else:
+        # Se ultrapassar 1024 caracteres, envia a foto com as contas de hoje + botão do app,
+        # e os próximos 3 dias em mensagem de texto logo abaixo (que suporta até 4096 caracteres)
+        caption_foto = "\n".join(msg_hoje) + "\n*(Detalhamento dos próximos 3 dias na mensagem abaixo 👇)*"
+        send_telegram_photo(photo_path, caption_foto)
+        send_telegram_message("\n".join(msg_proximos))
 
 if __name__ == "__main__":
     main()
