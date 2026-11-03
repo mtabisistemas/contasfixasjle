@@ -12,3 +12,5 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     autoRefreshToken: false
   }
 });
+
+export const INITIAL_MOCK_CONTAS = [];
