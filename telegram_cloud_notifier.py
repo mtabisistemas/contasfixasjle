@@ -8,8 +8,8 @@ import calendar
 from PIL import Image, ImageDraw, ImageFont
 
 # Configurações via variáveis de ambiente
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://vvbekmpzfznrfbhmxwah.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YmVrbXB6ZnpucmZiaG14d2FoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjA0NTExMSwiZXhwIjoyMTAxNjIxMTExfQ.KUICQoXFJWOaqLqgV7kx6FesCT0OudpUmO-FB7Yrsbo")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://dmwefcngefeonxuukwdl.supabase.co")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "sb_publishable_j3AShmEr6aEWjqBv2rruhw_5EE4NnOt")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8776974965:AAGGvVaHwUqINKrIxcGg0jTa6UN7vy-KekU")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "-5576645321")
 WEB_APP_URL = os.getenv("WEB_APP_URL", "https://contasfixasjle.vercel.app")
