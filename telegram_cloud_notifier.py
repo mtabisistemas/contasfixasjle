@@ -14,6 +14,17 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8776974965:AAGGvVaHwUqINKr
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "-5576645321")
 WEB_APP_URL = os.getenv("WEB_APP_URL", "https://contasfixasjle.vercel.app")
 
+# Proteção contra URLs de bancos antigos / desativados vindas de secrets do GitHub Actions
+OLD_PROJECTS = ["vvbekmpzfznrfbhmxwah", "fowlctvebdcodphntsjw", "dkscchjzztwyjzjpllob"]
+if any(old in SUPABASE_URL for old in OLD_PROJECTS) or not SUPABASE_URL:
+    print(f"[Notifier] URL antiga detectada ({SUPABASE_URL}). Redirecionando para o Supabase Unificado.")
+    SUPABASE_URL = "https://dmwefcngefeonxuukwdl.supabase.co"
+    SUPABASE_KEY = "sb_publishable_j3AShmEr6aEWjqBv2rruhw_5EE4NnOt"
+
+if any(old in SUPABASE_KEY for old in OLD_PROJECTS):
+    print("[Notifier] Chave antiga detectada. Redirecionando para a chave do Supabase Unificado.")
+    SUPABASE_KEY = "sb_publishable_j3AShmEr6aEWjqBv2rruhw_5EE4NnOt"
+
 def get_font(size: int, bold: bool = False):
     font_names = ["arialbd.ttf" if bold else "arial.ttf", "segoeui.ttf", "calibri.ttf"]
     for font_name in font_names:
@@ -56,6 +67,7 @@ def get_mock_contas():
 
 def fetch_contas():
     if not SUPABASE_URL or not SUPABASE_KEY:
+        print("[Notifier] Supabase URL ou Key vazios. Usando fallback.")
         return get_mock_contas()
 
     try:
@@ -63,11 +75,14 @@ def fetch_contas():
             f"{SUPABASE_URL}/rest/v1/contas?ativa=eq.true&order=dia_vencimento.asc",
             headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"}
         )
-        with urllib.request.urlopen(req_contas) as resp:
+        with urllib.request.urlopen(req_contas, timeout=15) as resp:
             data = json.loads(resp.read().decode("utf-8"))
+            print(f"[Notifier] Sucesso: {len(data)} contas ativas carregadas do Supabase ({SUPABASE_URL}).")
             return data if data else get_mock_contas()
     except Exception as e:
-        print("Aviso Supabase (usando contas padrão):", e)
+        print(f"[Notifier ERRO] Falha ao consultar Supabase ({SUPABASE_URL}):", e)
+        import traceback
+        traceback.print_exc()
         return get_mock_contas()
 
 def is_conta_valida_para_mes(c, mes: int, ano: int) -> bool:
@@ -81,8 +96,10 @@ def is_conta_valida_para_mes(c, mes: int, ano: int) -> bool:
 def gerar_imagem_calendario(contas, mes: int, ano: int) -> str:
     """Gera visualmente a mesma grade de calendário para o mês corrente."""
     contas_por_dia = {}
+    contas_do_mes = []
     for c in contas:
         if is_conta_valida_para_mes(c, mes, ano):
+            contas_do_mes.append(c)
             d = c["dia_vencimento"]
             contas_por_dia.setdefault(d, []).append(c)
 
@@ -127,7 +144,7 @@ def gerar_imagem_calendario(contas, mes: int, ano: int) -> str:
             print("Aviso logo:", e)
 
     draw.text((text_x_offset, 25), f"CALENDÁRIO DE CONTAS FIXAS - {meses_pt[mes]} {ano}", fill=(255, 255, 255), font=title_font)
-    draw.text((text_x_offset, 65), f"JLE TELECOM  |  Total de {len(contas)} contas fixas agendadas", fill=(209, 228, 240), font=subtitle_font)
+    draw.text((text_x_offset, 65), f"JLE TELECOM  |  Total de {len(contas_do_mes)} contas fixas agendadas neste mês", fill=(209, 228, 240), font=subtitle_font)
 
     # Grid do Calendário
     cal = calendar.Calendar(firstweekday=6)

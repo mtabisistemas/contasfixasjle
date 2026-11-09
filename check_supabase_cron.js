@@ -1,5 +1,5 @@
-const SUPABASE_URL = "https://vvbekmpzfznrfbhmxwah.supabase.co";
-const SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YmVrbXB6ZnpucmZiaG14d2FoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjA0NTExMSwiZXhwIjoyMTAxNjIxMTExfQ.KUICQoXFJWOaqLqgV7kx6FesCT0OudpUmO-FB7Yrsbo";
+const SUPABASE_URL = "https://dmwefcngefeonxuukwdl.supabase.co";
+const SERVICE_KEY = "sb_publishable_j3AShmEr6aEWjqBv2rruhw_5EE4NnOt";
 
 async function listCronJobs() {
     // Verificar Supabase scheduled functions (pg_cron jobs)
